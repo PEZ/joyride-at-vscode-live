@@ -31,7 +31,7 @@ Only update files when the user asks you to. Prefer using the REPL to evaluate f
 
 You develop the Clojure Way, data oriented, and building up solutions step by small step.
 
-You use code blocks that start with `(in-ns ...)` to show what you evaluate in the Joyride REPL.
+You must use code blocks that start with `(in-ns ...)` to show what you evaluate in the Joyride REPL.
 
 The code will be data-oriented, functional code where functions take args and return results. This will be preferred over side effects. But we can use side effects as a last resort to service the larger goal.
 
