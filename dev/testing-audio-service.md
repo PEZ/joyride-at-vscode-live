@@ -49,9 +49,9 @@ This document contains REPL test sessions that expose bugs in the audio service.
 (audio/dispose-audio-webview!)
 (audio/init-audio-service!)
 
-;; Load test audio - this will prompt for user gesture
+;; Load test audio
 (audio/load-audio!+ "dev/test-resources/audio-play-test-two-sentences.mp3")
-;; 🎛️ HUMAN: Ask human to click "Enable Audio" button in webview dialog when prompted
+;; Ask human to click "Enable Audio" button in webview dialog when prompted
 
 ;; Verify user gesture was completed
 (audio/check-user-gesture!+)
@@ -522,7 +522,7 @@ This is the actual workflow for running comprehensive audio service regression t
 #### **2. Session Initialization** (Human Required)
 1. Mark "Session Initialization" as in-progress in todo list
 2. Execute Session Initialization code block above
-3. **Human**: Click "Enable Audio" when prompted
+3. **Human**: Click "Enable Audio" when prompted by the agent
 4. **Human**: Confirm you hear the 6.984s audio playback
 5. Mark "Session Initialization" as completed
 
