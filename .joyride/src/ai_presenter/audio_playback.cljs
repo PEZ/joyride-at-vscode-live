@@ -108,7 +108,7 @@
       (set! (-> webview .-webview .-html) html-content))))
 
 (defn init-audio-service!
-  "Improved version using external HTML file"
+  "Initialize the audio service webview and handlers"
   []
   (create-audio-webview!)
   (load-html-from-file!)
@@ -168,18 +168,6 @@
      (.-webview webview)
      (clj->js (apply merge {:command (name command)} args)))))
 
-(defn play-audio! [& {:keys [id]}]
-  (send-audio-command! :play {:id (or id "default")}))
-
-(defn pause-audio! [& {:keys [id]}]
-  (send-audio-command! :pause {:id (or id "default")}))
-
-(defn stop-audio! [& {:keys [id]}]
-  (send-audio-command! :stop {:id (or id "default")}))
-
-(defn set-volume! [volume & {:keys [id]}]
-  (send-audio-command! :volume {:volume volume :id (or id "default")}))
-
 (defn get-audio-status!+ []
   (p/create
    (fn [resolve reject]
@@ -192,7 +180,36 @@
                        (swap! !state remove-resolver :status-resolvers "current")
                        (reject "Status request timeout")) 5000))))
 
-(defn load-audio-promise!+
+(defn play-audio!+
+  "Smart play that checks readiness first and returns comprehensive info"
+  [& {:keys [id]}]
+  (p/let [status (get-audio-status!+)
+          readiness (get-play-readiness status)]
+    (if (:ready? readiness)
+      (do
+        (send-audio-command! :play {:id (or id "default")})
+        ;; Get updated status after play command
+        (p/let [new-status (get-audio-status!+)]
+          {:success true
+           :action :played
+           :readiness readiness
+           :status-before status
+           :status-after new-status}))
+      {:success false
+       :action :blocked
+       :readiness readiness
+       :status status})))
+
+(defn pause-audio!+ [& {:keys [id]}]
+  (send-audio-command! :pause {:id (or id "default")}))
+
+(defn stop-audio!+ [& {:keys [id]}]
+  (send-audio-command! :stop {:id (or id "default")}))
+
+(defn set-volume!+ [volume & {:keys [id]}]
+  (send-audio-command! :volume {:volume volume :id (or id "default")}))
+
+(defn load-audio!+
   "Returns a promise that resolves when audio is loaded and ready to play, or rejects with detailed error info"
   [local-file-path & {:keys [id timeout-ms] :or {timeout-ms 10000}}]
   (let [audio-id (or id "default")
@@ -224,32 +241,6 @@
                              (str ". Error: " (:lastError final-status))))))))
         timeout-ms)))))
 
-(defn load-audio! [local-file-path & {:keys [id]}]
-  (let [absolute-path (ensure-absolute-path local-file-path)
-        webview (:webview @!state)
-        audio-uri (.asWebviewUri (.-webview webview) (vscode/Uri.file absolute-path))]
-    (send-audio-command! :load {:audioPath (str audio-uri)
-                                :id (or id "default")})))
-(defn play-audio-smart!+
-  "Smart play that checks readiness first and returns comprehensive info"
-  [& {:keys [id]}]
-  (p/let [status (get-audio-status!+)
-          readiness (get-play-readiness status)]
-    (if (:ready? readiness)
-      (do
-        (send-audio-command! :play {:id (or id "default")})
-        ;; Get updated status after play command
-        (p/let [new-status (get-audio-status!+)]
-          {:success true
-           :action :played
-           :readiness readiness
-           :status-before status
-           :status-after new-status}))
-      {:success false
-       :action :blocked
-       :readiness readiness
-       :status status})))
-
 (defn check-user-gesture!+
   "Check if user gesture has been completed"
   []
@@ -274,39 +265,38 @@
   [file-path]
   (p/let [gesture-complete? (check-user-gesture!+)]
     (if gesture-complete?
-      ;; User gesture already complete, proceed with loading
-      (p/let [load-result (load-audio-promise!+ file-path)
-              play-result (play-audio!)]
+      ;; User gesture already complete, proceed with loading then playing
+      (p/let [load-result (load-audio!+ file-path)
+              play-result (play-audio!+)]
         {:load-result load-result
          :play-result play-result
          :success true})
-      ;; No user gesture yet, prompt user first
+      ;; No user gesture yet, prompt user first then load and play
       (p/let [_ (prompt-user-for-audio-gesture!+)
-              ;; After user clicks Done, proceed with loading
-              load-result (load-audio-promise!+ file-path)
-              play-result (play-audio!)]
+              ;; After user clicks Done, proceed with loading then playing
+              load-result (load-audio!+ file-path)
+              play-result (play-audio!+)]
         {:load-result load-result
          :play-result play-result
          :success true}))))
 
 (comment
-  (p/let [load+ (load-audio! "slides/voice/demo-tts.mp3")]
+  (p/let [load+ (load-audio!+ "slides/voice/demo-tts.mp3")]
     (def load+ load+))
 
-  (p/let [play+ (play-audio!)]
+  (p/let [play+ (play-audio!+)]
     (def play+ play+))
 
   (p/let [load-and-play+ (load-and-play-audio!+ "slides/voice/demo-tts.mp3")]
     (def load-and-play+ load-and-play+))
 
-
-  (p/let [pause+ (pause-audio!)]
+  (p/let [pause+ (pause-audio!+)]
     (def pause+ pause+))
 
-  (p/let [set-volume+ (set-volume! 0.1)]
+  (p/let [set-volume+ (set-volume!+ 0.1)]
     (def set-volume+ set-volume+))
 
-  (p/let [stop+ (stop-audio!)]
+  (p/let [stop+ (stop-audio!+)]
     (def stop+ stop+))
 
   :rcf)

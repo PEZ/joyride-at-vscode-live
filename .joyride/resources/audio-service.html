@@ -17,6 +17,10 @@
 
     <div class='status' id='status'>Ready to test audio playback</div>
 
+    <div>
+        <p>You must manually click the Enable Audio button, because browser security.</p>
+    </div>
+
     <div class='controls'>
         <button onclick='enableAudio()' style='background: #0078d4; color: white; border: none; padding: 15px 25px; font-size: 16px;'>
             🔊 Enable Audio
@@ -92,22 +96,6 @@
 
             // Check if we can now mark audio as fully ready
             checkAndUpdateReadiness();
-
-            // AUTO-PLAY: If audio data is already ready, start playing immediately
-            if (audioStatus.audioDataReady) {
-                log('AUTO-PLAY: Audio data ready and user gesture just completed - starting playback');
-                audioStatus.playbackState = 'playing';
-                audio.play().then(() => {
-                    log('AUTO-PLAY: Audio play() succeeded');
-                    updateStatus('Auto-playing', 'success');
-                }).catch(err => {
-                    const msg = 'AUTO-PLAY: Audio play() failed: ' + err.message;
-                    log(msg);
-                    audioStatus.lastError = msg;
-                    audioStatus.playbackState = 'stopped';
-                    updateStatus(msg, 'error');
-                });
-            }
 
             vscode.postMessage({type: 'userGestureComplete', success: true, message: 'User clicked enable button'});
         }
@@ -230,22 +218,6 @@
 
             // Check if we can now mark audio as fully ready (data + user gesture)
             checkAndUpdateReadiness();
-
-            // AUTO-PLAY: If user gesture was already completed, start playing immediately
-            if (audioStatus.userGestureComplete && audioStatus.audioDataReady) {
-                log('AUTO-PLAY: User gesture complete and audio ready - starting playback');
-                audioStatus.playbackState = 'playing';
-                audio.play().then(() => {
-                    log('AUTO-PLAY: Audio play() succeeded');
-                    updateStatus('Auto-playing', 'success');
-                }).catch(err => {
-                    const msg = 'AUTO-PLAY: Audio play() failed: ' + err.message;
-                    log(msg);
-                    audioStatus.lastError = msg;
-                    audioStatus.playbackState = 'stopped';
-                    updateStatus(msg, 'error');
-                });
-            }
         });
 
         audio.addEventListener('playing', () => {
