@@ -30,7 +30,7 @@ This document contains REPL test sessions that expose bugs in the audio service.
 
 ### Session Flow:
 1. **🎛️ Session Initialization** (Human interaction required once)
-2. **🤖 Automated Test Suite** (No human interaction needed)
+2. **🤖 Automated Test Suite** (Less human interaction needed)
 3. **🔄 Session Reset** (Verify clean shutdown for next session)
 
 ---
@@ -83,8 +83,7 @@ This document contains REPL test sessions that expose bugs in the audio service.
 
 ---
 
-## 🤖 AUTOMATED TEST SUITE (No Human Interaction)
-
+## 🤖 AUTOMATED TEST SUITE
 **Note**: These tests rely on the audio service being initialized from Session Initialization above. They can be run sequentially without human intervention.
 
 ### Tests That Should PASS ✅ (Baseline Functionality)
@@ -191,7 +190,7 @@ These tests verify functionality that currently works correctly and should conti
 - ✅ No webview state corruption from invalid file attempts
 - ✅ Audio service remains functional after invalid file attempts
 
-#### Test D: Additional Audio Operations (Using Initialized Service)
+#### Test D: Additional Audio Operations (Using Initialized Service if possible)
 
 **Status**: ✅ SHOULD PASS - Additional operations work with initialized service
 **Dependencies**: Relies on session initialization having completed user gesture
@@ -526,7 +525,7 @@ This is the actual workflow for running comprehensive audio service regression t
 4. **Human**: Confirm you hear the 6.984s audio playback
 5. Mark "Session Initialization" as completed
 
-#### **3. Baseline Tests** (Automated)
+#### **3. Baseline Tests**
 Run each test in sequence, updating todo list:
 
 1. **Test A**: Mark in-progress → Execute Duration Detection code → Mark completed
@@ -534,7 +533,7 @@ Run each test in sequence, updating todo list:
 3. **Test C**: Mark in-progress → Execute File Existence Validation → Mark completed
 4. **Test D**: Mark in-progress → Execute Additional Audio Operations → Mark completed
 
-#### **4. Bug Tests** (Automated)
+#### **4. Bug Tests**
 Run each test in sequence, updating todo list:
 
 1. **Bug Test 1**: Mark in-progress → Execute Concurrent Load Handling → Mark completed
@@ -544,7 +543,7 @@ Run each test in sequence, updating todo list:
 5. **Bug Test 5**: Mark in-progress → Execute Missing Audio Event Handling → Mark completed
 6. **Bug Test 6**: Mark in-progress → Execute Timeout Error Messages → Mark completed
 
-#### **5. Session Reset** (Automated)
+#### **5. Session Reset**
 1. Mark "Session Reset" as in-progress
 2. Execute Session Reset code block
 3. Mark "Session Reset" as completed
