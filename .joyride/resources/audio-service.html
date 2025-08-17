@@ -92,12 +92,37 @@
             log('User clicked enable audio button - gesture captured');
             userGestureComplete = true;
             audioStatus.userGestureComplete = true;
-            updateStatus('Audio enabled', 'success');
+            
+            // CRITICAL FIX: Unlock audio element for future programmatic playback
+            // We must interact with audio element during user gesture to satisfy browser security
+            try {
+                // Method 1: Try a brief play/pause to unlock the audio element
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        audio.pause();
+                        log('Audio element unlocked via play/pause during user gesture');
+                    }).catch(err => {
+                        log('Audio unlock play failed, trying alternative method: ' + err.message);
+                        // Method 2: If play fails, at least call load() to interact with element
+                        audio.load();
+                        log('Audio element interaction via load() during user gesture');
+                    });
+                } else {
+                    // Fallback for browsers where play() doesn't return promise
+                    audio.load();
+                    log('Audio element interaction via load() during user gesture');
+                }
+            } catch (err) {
+                log('Audio unlock error: ' + err.message + ' - proceeding anyway');
+            }
+            
+            updateStatus('Audio enabled and unlocked', 'success');
 
             // Check if we can now mark audio as fully ready
             checkAndUpdateReadiness();
 
-            vscode.postMessage({type: 'userGestureComplete', success: true, message: 'User clicked enable button'});
+            vscode.postMessage({type: 'userGestureComplete', success: true, message: 'User clicked enable button and audio unlocked'});
         }
 
         function loadAudio(audioPath) {
