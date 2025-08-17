@@ -165,7 +165,13 @@
 (comment
 
   ;; Generate audio for a slide
-  (generate-slide-audio!+ "demo-tts" "Hello, testing TTS")
+  (generate-slide-audio!+ "audio-play-test-very-short" "Hello, testing audio")
+
+  (generate-slide-audio!+ "audio-play-test-two-sentences" "Hello, this is a test of the audio generation system.
+
+    [Pause]
+
+    It should play a bit longer that the very-short test.")
 
   ;; Play generated audio (relative path)
   (ai-presenter.audio-playback/load-and-play-audio!+ "slides/voice/demo-tts.mp3")
