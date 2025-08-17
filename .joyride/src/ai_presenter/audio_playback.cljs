@@ -216,34 +216,37 @@
 (defn load-audio!+
   "Returns a promise that resolves when audio is loaded and ready to play, or rejects with detailed error info"
   [local-file-path & {:keys [id timeout-ms] :or {timeout-ms 10000}}]
-  (let [audio-id (or id "default")
-        absolute-path (ensure-absolute-path local-file-path)]
-    (p/create
-     (fn [resolve reject]
-       ;; Store both resolve and reject functions
-       (swap! !state add-load-resolver audio-id {:resolve resolve :reject reject})
-       ;; Send load command using existing function
-       (let [webview (:webview @!state)
-             audio-uri (.asWebviewUri (.-webview webview) (vscode/Uri.file absolute-path))]
-         (send-audio-command! :load {:audioPath (str audio-uri)
-                                     :id audio-id}))
-       ;; Enhanced timeout with status check
-       (js/setTimeout
-        #(p/let [final-status (get-audio-status!+)]
-           (swap! !state remove-resolver :load-resolvers audio-id)
-           (if (and (:audioDataReady final-status)
-                    (not (:userGestureComplete final-status)))
-             ;; Audio data loaded but waiting for user gesture
-             (reject (js/Error.
-                      (str "Audio loaded but requires user gesture. Duration: "
-                           (:audioDuration final-status) "s. Please click 'Enable Audio'.")))
-             ;; True timeout or other issue
-             (reject (js/Error.
-                      (str "Audio load timeout for: " local-file-path
-                           ". Status: " (:playbackState final-status)
-                           (when (:lastError final-status)
-                             (str ". Error: " (:lastError final-status))))))))
-        timeout-ms)))))
+  (try
+    (let [audio-id (or id "default")
+          absolute-path (ensure-absolute-path local-file-path)]
+      (p/create
+       (fn [resolve reject]
+         ;; Store both resolve and reject functions
+         (swap! !state add-load-resolver audio-id {:resolve resolve :reject reject})
+         ;; Send load command using existing function
+         (let [webview (:webview @!state)
+               audio-uri (.asWebviewUri (.-webview webview) (vscode/Uri.file absolute-path))]
+           (send-audio-command! :load {:audioPath (str audio-uri)
+                                       :id audio-id}))
+         ;; Enhanced timeout with status check
+         (js/setTimeout
+          #(p/let [final-status (get-audio-status!+)]
+             (swap! !state remove-resolver :load-resolvers audio-id)
+             (if (and (:audioDataReady final-status)
+                      (not (:userGestureComplete final-status)))
+               ;; Audio data loaded but waiting for user gesture
+               (reject (js/Error.
+                        (str "Audio loaded but requires user gesture. Duration: "
+                             (:audioDuration final-status) "s. Please click 'Enable Audio'.")))
+               ;; True timeout or other issue
+               (reject (js/Error.
+                        (str "Audio load timeout for: " local-file-path
+                             ". Status: " (:playbackState final-status)
+                             (when (:lastError final-status)
+                               (str ". Error: " (:lastError final-status))))))))
+          timeout-ms))))
+    (catch :default e
+      (vscode/window.showErrorMessage (.-message e)))))
 
 (defn check-user-gesture!+
   "Check if user gesture has been completed"
@@ -304,15 +307,8 @@
   (p/let [stop+ (stop-audio!+)]
     (def stop+ stop+))
 
-    ;; This throws in the repl
   (load-audio!+ "not-a-path/not-a-file.mp3")
 
-  ;; If we add promise handling we also need to catch
-  ;;   This won't throw:
   (p/let [_ (load-audio!+ "not-a-path/not-a-file.mp3")])
-  ;;   We can do this instead:
-  (-> (p/let [_ (load-audio!+ "not-a-path/not-a-file.mp3")])
-      (p/catch (fn [e]
-                 (vscode/window.showErrorMessage (str "File error caught: " (.-message e))))))
 
   :rcf)
