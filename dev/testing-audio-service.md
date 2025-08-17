@@ -226,10 +226,17 @@ These tests verify functionality that currently works correctly and should conti
 
 **Note**: These tests rely on specific initialization states as documented. Most use the initialized session, some require fresh state to test specific bugs.
 
-#### Test 1: Concurrent Audio Load Handling
+#### Test 1: Single Load Operation Policy (Concurrent Load Rejection)
 
-**Status**: 🔴 CURRENTLY FAILS - Multiple concurrent loads create resolver conflicts
+**Status**: 🔴 CURRENTLY FAILS - Allows multiple concurrent loads, creating orphaned promises
 **Dependencies**: Requires fresh webview state to test resolver conflicts cleanly
+**Core Principle**: Audio service should only handle ONE load operation at a time
+
+**Expected Behavior**:
+1. **Only one active load**: Service maintains at most one pending load operation
+2. **Immediate cancellation**: New load immediately cancels any existing pending load
+3. **Clear rejection**: Cancelled load promises reject with "Load cancelled by new load operation"
+4. **Clean state**: State shows only the most recent load operation
 
 **Test Session**:
 ```clojure
@@ -237,24 +244,24 @@ These tests verify functionality that currently works correctly and should conti
 (audio/dispose-audio-webview!)
 (audio/init-audio-service!)
 
-;; Start two concurrent loads WITHOUT user gesture (to test resolver conflicts)
+;; Start first load
 (def load1-promise (audio/load-audio!+ "dev/test-resources/audio-play-test-very-short.mp3" :id "first"))
+;; Immediately start second load (should cancel first)
 (def load2-promise (audio/load-audio!+ "dev/test-resources/audio-play-test-two-sentences.mp3" :id "second"))
 
-;; Check internal state for resolver conflicts
+;; Check internal state - should show only the most recent load
 @audio/!state
-;; ACTUAL BUG OBSERVED: Shows only {"first": {...}} - "second" resolver disappeared!
-;; This means second load overwrote first without rejecting it properly
-;; EXPECTED AFTER FIX: Only {"second": {...}} with first promise rejected
+;; EXPECTED AFTER FIX: Only {"second": {...}} resolver exists
+;; ACTUAL BUG: Both resolvers exist briefly, then "second" disappears, leaving only "first"
 
-;; Test resolver outcome (both promises should behave correctly)
-;; First promise should be rejected, second should be waiting for user gesture
+;; Test promise behavior - first should be rejected, second should be active
 (js/Promise.
  (fn [resolve reject]
    (-> load1-promise
        (.then #(resolve (str "Load1 unexpected success: " %)))
        (.catch #(resolve (str "Load1 expected rejection: " (.-message %)))))))
 ;; EXPECTED AFTER FIX: "Load1 expected rejection: Load cancelled by new load operation"
+;; ACTUAL BUG: Promise never resolves or rejects (orphaned)
 
 (js/Promise.
  (fn [resolve reject]
@@ -265,15 +272,16 @@ These tests verify functionality that currently works correctly and should conti
 ```
 
 **Expected Behavior (after fix)**:
-- ✅ `load1-promise` should reject with "Load cancelled by new load operation"
-- ✅ `load2-promise` should wait for user gesture (not resolve/reject yet)
+- ✅ `load1-promise` should reject immediately with "Load cancelled by new load operation"
+- ✅ `load2-promise` should become the active operation, waiting for user gesture
 - ✅ `@audio/!state` should show only one resolver for "second" id
 - ✅ No orphaned promises or memory leaks
 
 **Current Behavior (bug)**:
-- ❌ Resolver conflicts in state management
-- ❌ First promise may not be rejected properly
-- ❌ Potential memory leaks from orphaned resolvers#### Test 2: Audio Playing Status Accuracy
+- ❌ Both resolvers exist simultaneously (violates single-load principle)
+- ❌ First promise never resolves or rejects (orphaned promise)
+- ❌ State inconsistency (resolver disappears without proper cleanup)
+- ❌ Memory leaks from unresolved promises#### Test 2: Audio Playing Status Accuracy
 
 **Status**: 🔴 CURRENTLY FAILS - Reports "playing" immediately, not when actually playing
 **Dependencies**: Relies on session initialization (user gesture complete)
