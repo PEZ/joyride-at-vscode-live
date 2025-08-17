@@ -24,15 +24,19 @@
 ;; =============================================================================
 
 (defn ensure-absolute-path
-  "Convert relative path to absolute path if needed"
+  "Convert relative path to absolute path if needed, and verify existence"
   [file-path]
-  (if (.startsWith file-path "/")
-    file-path
-    (path/join (-> vscode/workspace.workspaceFolders
-                   first
-                   .-uri
-                   .-fsPath)
-               file-path)))
+  (let [absolute-path (if (.startsWith file-path "/")
+                        file-path
+                        (path/join (-> vscode/workspace.workspaceFolders
+                                       first
+                                       .-uri
+                                       .-fsPath)
+                                   file-path))]
+    (if (fs/existsSync absolute-path)
+      absolute-path
+      (throw (js/Error. (str "File or directory does not exist: '" file-path "' "
+                             "(resolved to: " absolute-path ")"))))))
 
 (defn can-play?
   "Pure function: Check if audio system is ready to play"
@@ -284,6 +288,7 @@
   (p/let [load+ (load-audio!+ "slides/voice/demo-tts.mp3")]
     (def load+ load+))
 
+
   (p/let [play+ (play-audio!+)]
     (def play+ play+))
 
@@ -298,5 +303,16 @@
 
   (p/let [stop+ (stop-audio!+)]
     (def stop+ stop+))
+
+    ;; This throws in the repl
+  (load-audio!+ "not-a-path/not-a-file.mp3")
+
+  ;; If we add promise handling we also need to catch
+  ;;   This won't throw:
+  (p/let [_ (load-audio!+ "not-a-path/not-a-file.mp3")])
+  ;;   We can do this instead:
+  (-> (p/let [_ (load-audio!+ "not-a-path/not-a-file.mp3")])
+      (p/catch (fn [e]
+                 (vscode/window.showErrorMessage (str "File error caught: " (.-message e))))))
 
   :rcf)

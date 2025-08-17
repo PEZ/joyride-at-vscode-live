@@ -168,7 +168,7 @@
   (generate-slide-audio!+ "demo-tts" "Hello, testing TTS")
 
   ;; Play generated audio (relative path)
-  (ai-presenter.audio-playback/load-and-play-audio!+ ".joyride/temp-audio/demo-slide.mp3")
+  (ai-presenter.audio-playback/load-and-play-audio!+ "slides/voice/demo-tts.mp3")
 
   ;; Generate and play audio in one step
   (generate-and-play-message!+ "This is a direct HD voice playback example.")
