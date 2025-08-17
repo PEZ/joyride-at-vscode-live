@@ -219,6 +219,10 @@
   (try
     (let [audio-id (or id "default")
           absolute-path (ensure-absolute-path local-file-path)]
+      ;; Reject any existing load operations
+      (doseq [[_existing-id {:keys [reject]}] (:load-resolvers @!state)]
+        (reject (js/Error. "Load cancelled by new load operation")))
+      (swap! !state assoc :load-resolvers {})
       (p/create
        (fn [resolve reject]
          ;; Store both resolve and reject functions

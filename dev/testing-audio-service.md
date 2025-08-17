@@ -228,7 +228,7 @@ These tests verify functionality that currently works correctly and should conti
 
 #### Test 1: Single Load Operation Policy (Concurrent Load Rejection)
 
-**Status**: 🔴 CURRENTLY FAILS - Allows multiple concurrent loads, creating orphaned promises
+**Status**: ✅ SHOULD PASS - Fix 1 implemented: Prevents concurrent loads, properly rejects previous operations
 **Dependencies**: Requires fresh webview state to test resolver conflicts cleanly
 **Core Principle**: Audio service should only handle ONE load operation at a time
 
@@ -277,7 +277,13 @@ These tests verify functionality that currently works correctly and should conti
 - ✅ `@audio/!state` should show only one resolver for "second" id
 - ✅ No orphaned promises or memory leaks
 
-**Current Behavior (bug)**:
+**Current Behavior (FIXED in Fix 1)**:
+- ✅ Only one resolver exists (single-load principle enforced)
+- ✅ First promise properly rejected with clear message
+- ✅ State is consistent (only most recent load operation tracked)
+- ✅ No orphaned promises or memory leaks
+
+**Previous Behavior (before fix)**:
 - ❌ Both resolvers exist simultaneously (violates single-load principle)
 - ❌ First promise never resolves or rejects (orphaned promise)
 - ❌ State inconsistency (resolver disappears without proper cleanup)
