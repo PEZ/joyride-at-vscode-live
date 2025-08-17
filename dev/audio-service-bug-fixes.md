@@ -173,11 +173,12 @@ The file `dev/testing-audio-service.md` will contain:
 (audio/get-audio-status!+)    ;; Should show no lastError
 ```
 
-**✅ FIX COMPLETED 2025-08-17**:
-- **Root Cause**: `enableAudio()` function wasn't interacting with audio element during user gesture
+**✅ FIX 0 COMPLETED 2025-08-17 - CRITICAL FUNCTIONALITY RESTORED**:
+- **Root Cause**: `enableAudio()` function wasn't properly unlocking audio element during user gesture
 - **Solution**: Added `audio.play().then(audio.pause())` within gesture handler to unlock audio element
-- **Validation**: All test sequences now pass without user gesture errors
-- **Result**: Audio playback works correctly after user clicks "Enable Audio"
+- **Validation**: All test sequences now pass - audio playback works correctly after user clicks "Enable Audio"
+- **Impact**: Core audio functionality now works correctly
+- **Regression Test**: Test documented in `dev/testing-audio-service.md` Session Initialization section
 
 **🛑 CRITICAL: Fix 0 must be completed before any other fixes, as it affects core functionality**
 
@@ -202,10 +203,13 @@ The file `dev/testing-audio-service.md` will contain:
 
 ;; Check resolvers state - should show conflict
 @audio/!state
+;; ACTUAL BUG OBSERVED: Both resolvers exist initially {"first": {}, "second": {}},
+;; then "second" disappears, leaving only {"first": {}}
+;; This means first promise becomes orphaned (never resolves/rejects)
 
-;; BUG: Both promises may resolve, or wrong resolver used
-;; EXPECTED: load1-promise should reject with "Load cancelled by new load operation"
-;; EXPECTED: Only load2-promise should succeed
+;; BUG: First promise never resolves or rejects (orphaned promise)
+;; EXPECTED AFTER FIX: load1-promise should reject with "Load cancelled by new load operation"
+;; EXPECTED AFTER FIX: Only load2-promise should succeed and wait for user gesture
 ```
 
 ### Step 2: Document in dev/testing-audio-service.md
