@@ -4,6 +4,7 @@
 
 **⚠️ IMPORTANT: Complete each fix individually and have human test before proceeding to the next one.**
 
+- [ ] **Fix 0: CRITICAL - User Gesture Playback Failure** - Status: Not Started
 - [ ] **Fix 1: Prevent Concurrent Audio Loads** - Status: Not Started
 - [ ] **Fix 2: Fix Premature "Playing" Status in Webview** - Status: Not Started
 - [ ] **Fix 3: Remove Race Condition in play-audio!+** - Status: Not Started
@@ -75,6 +76,106 @@ The file `dev/testing-audio-service.md` will contain:
 **⚠️ CRITICAL**: Every code change should be tested in the Joyride REPL before being considered complete.
 
 **🎛️ HUMAN INTERACTION NOTE**: Many tests require the human to click "Enable Audio" in the webview dialog. **Audio playback verification requires human ears** - the AI agent cannot determine if audio actually plays.
+
+## Fix 0: CRITICAL - User Gesture Playback Failure
+**Priority**: CRITICAL (audio playback completely broken after user gesture)
+**Files**: `audio-service.html` and potentially `audio_playback.cljs`
+**Impact**: Core functionality - audio doesn't play even after user completes gesture
+
+### Step 1: Bug Discovered During Session Initialization
+**During session initialization testing on 2025-08-17, this critical bug was discovered:**
+
+```clojure
+;; Session initialization sequence that exposed the bug:
+(require '[ai-presenter.audio-playback :as audio] :reload)
+(audio/dispose-audio-webview!)
+(audio/init-audio-service!)
+
+;; Load audio - prompts for user gesture
+(audio/load-audio!+ "dev/test-resources/audio-play-test-two-sentences.mp3")
+;; Human clicks "Enable Audio" button in webview
+
+;; Verify user gesture was registered
+(audio/check-user-gesture!+)
+;; ✅ Returns: true (user gesture completed)
+
+;; But actual playback still fails!
+(audio/play-audio!+)
+;; ❌ BUG: Still fails with "Audio play() failed: play() can only be initiated by a user gesture"
+
+;; Status shows the contradiction:
+(audio/get-audio-status!+)
+;; Shows: {:userGestureComplete true, :lastError "Audio play() failed: play() can only be initiated by a user gesture", :playbackState "stopped"}
+```
+
+### Step 2: Issue Analysis
+**CRITICAL CONTRADICTION**: The service reports `userGestureComplete: true` but actual audio.play() still fails with "play() can only be initiated by a user gesture."
+
+**Root Cause Hypothesis**: The user gesture handling in the webview may not be properly preserving the gesture context for the audio element, or the gesture event isn't being correctly associated with the audio.play() call.
+
+### Step 3: REPL Test for Reproduction
+**Add this test to `dev/testing-audio-service.md` as "Test 0: Critical User Gesture Bug":**
+
+```clojure
+;; CRITICAL BUG TEST: User gesture completion doesn't enable playback
+(audio/dispose-audio-webview!)
+(audio/init-audio-service!)
+
+;; Load audio and complete user gesture
+(audio/load-audio!+ "dev/test-resources/audio-play-test-two-sentences.mp3")
+;; Human clicks "Enable Audio"
+
+;; Verify gesture completion
+(def gesture-complete (audio/check-user-gesture!+))
+;; EXPECTED: true
+
+;; Attempt playback
+(def play-result (audio/play-audio!+))
+;; BUG: Should succeed but fails with user gesture error
+;; EXPECTED AFTER FIX: Should succeed without error
+
+;; Check final status
+(audio/get-audio-status!+)
+;; BUG: Shows userGestureComplete=true but lastError about user gesture
+;; EXPECTED AFTER FIX: Should show successful playback initiation
+```
+
+### Step 4: Investigation Areas
+1. **Webview gesture handling**: Check if `Enable Audio` button click properly enables audio.play()
+2. **Gesture event propagation**: Ensure gesture context is preserved for audio element
+3. **Browser security model**: Verify we're meeting browser requirements for user gesture + audio
+4. **Timing issues**: Check if there's a race condition between gesture registration and audio.play()
+
+### Step 5: Solution Implementation Strategy
+**Primary investigation**: Examine `audio-service.html` `Enable Audio` button handler and ensure:
+- Button click event properly enables audio playback capability
+- Audio element receives the user gesture context
+- No async operations break the gesture chain
+
+**Potential fixes**:
+1. Ensure audio.play() is called synchronously within gesture event handler
+2. Use audio.load() or audio.play().pause() within gesture to "activate" the audio element
+3. Verify webview security policies aren't interfering with audio playback
+
+### Files to Edit
+- `/Users/pez/Projects/Meetup/joyride-at-vscode-live/.joyride/resources/audio-service.html` (gesture handling)
+- Potentially `/Users/pez/Projects/Meetup/joyride-at-vscode-live/.joyride/src/ai_presenter/audio_playback.cljs` (gesture verification)
+
+### Step 6: Validation Test
+```clojure
+;; After fix, this sequence should work completely:
+(audio/dispose-audio-webview!)
+(audio/init-audio-service!)
+(audio/load-audio!+ "dev/test-resources/audio-play-test-two-sentences.mp3")
+;; Human clicks Enable Audio
+(audio/check-user-gesture!+)  ;; Should return true
+(audio/play-audio!+)          ;; Should succeed without gesture error
+(audio/get-audio-status!+)    ;; Should show no lastError
+```
+
+**🛑 CRITICAL: Fix 0 must be completed before any other fixes, as it affects core functionality**
+
+---
 
 ## Fix 1: Prevent Concurrent Audio Loads
 **File**: `audio_playback.cljs`
@@ -354,12 +455,13 @@ Enhance error messages with more specific timeout information.
 ---
 
 ## Execution Order
-1. **Fix 1** (Concurrent loads) - Must be done first to prevent new bugs during testing
-2. **Fix 2** (Webview playing status) - Core bug fix
-3. **Fix 3** (Race condition) - Depends on Fix 2 working correctly
-4. **Fix 4** (ID validation) - Can be done in parallel with others
-5. **Fix 5** (Event handlers) - Enhancement, can be done last
-6. **Fix 6** (Error messages) - Enhancement, can be done last
+1. **Fix 0** (CRITICAL - User gesture playback) - **MUST BE DONE FIRST** - Core functionality broken
+2. **Fix 1** (Concurrent loads) - Must be done early to prevent new bugs during testing
+3. **Fix 2** (Webview playing status) - Core bug fix
+4. **Fix 3** (Race condition) - Depends on Fix 2 working correctly
+5. **Fix 4** (ID validation) - Can be done in parallel with others
+6. **Fix 5** (Event handlers) - Enhancement, can be done last
+7. **Fix 6** (Error messages) - Enhancement, can be done last
 
 ## Testing Strategy
 **🔬 JOYRIDE REPL-DRIVEN TESTING**: All testing must be done through the Joyride evaluation tool.
