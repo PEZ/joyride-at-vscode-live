@@ -255,12 +255,12 @@
                (reject (js/Error.
                         (str "Audio loaded but requires user gesture. Duration: "
                              (:audioDuration final-status) "s. Please click 'Enable Audio'.")))
-               ;; True timeout or other issue
+               ;; True timeout or other issue - enhanced error messages
                (reject (js/Error.
-                        (str "Audio load timeout for: " local-file-path
-                             ". Status: " (:playbackState final-status)
-                             (when (:lastError final-status)
-                               (str ". Error: " (:lastError final-status))))))))
+                        (case (:playbackState final-status)
+                          "loading" (str "Audio load timeout (still loading after " timeout-ms "ms): " local-file-path)
+                          "error" (str "Audio load timeout - failed with error: " (:lastError final-status))
+                          (str "Audio load timeout (state: " (:playbackState final-status) " after " timeout-ms "ms): " local-file-path))))))
           timeout-ms))))
     (catch :default e
       (vscode/window.showErrorMessage (.-message e))
