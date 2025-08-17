@@ -57,13 +57,13 @@ This document contains REPL test sessions that expose bugs in the audio service.
 (audio/check-user-gesture!+)
 ;; EXPECTED: true
 
-;; Test actual playbook to verify everything works
+;; Test actual playback to verify everything works
 (audio/play-audio!+)
 ;; 👂 HUMAN: Confirm you hear audio playback (6.984 seconds of speech)
 ;; This validates the entire audio pipeline works end-to-end
 
 ;; 🔍 REGRESSION TEST: Critical User Gesture Bug (Fix 0)
-;; This test validates that Fix 0 remains working - playbook succeeds after user gesture
+;; This test validates that Fix 0 remains working - playback succeeds after user gesture
 ;; without the critical "play() can only be initiated by a user gesture" error
 (def playback-result (audio/play-audio!+))
 ;; Validate that no user gesture error occurred
