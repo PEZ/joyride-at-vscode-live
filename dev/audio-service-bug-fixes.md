@@ -77,66 +77,23 @@ The file `dev/testing-audio-service.md` will contain:
 
 **🎛️ HUMAN INTERACTION NOTE**: Many tests require the human to click "Enable Audio" in the webview dialog. **Audio playback verification requires human ears** - the AI agent cannot determine if audio actually plays.
 
-## Fix 0: CRITICAL - User Gesture Playback Failure
+## Fix 0: CRITICAL - User Gesture Playback Failure ✅ COMPLETED
 
-User performing gesture, but playback system still requiring it.
+**Bug**: User would click "Enable Audio" but playback system still required additional user gesture, causing "play() can only be initiated by a user gesture" errors.
 
-This is fixed and regression test exist in the testing doc.
+**Fix**: Fixed webview audio gesture detection and promise resolution logic.
+
+**Result**: Audio plays correctly after user enables it once. Regression test exists in testing doc.
 
 ---
 
-## Fix 1: Prevent Concurrent Audio Loads
-**File**: `audio_playback.cljs`
-**Function**: `load-audio!+`
-**Priority**: High (affects promise resolution reliability)
+## Fix 1: Prevent Concurrent Audio Loads ✅ COMPLETED
 
-### Step 1: Expose the Problem with REPL Test
-**First, create a REPL session that demonstrates the concurrent load bug:**
+**Bug**: Multiple concurrent `load-audio!+` operations created orphaned promises and resolver conflicts. First promise would never resolve/reject when a second load started.
 
-```clojure
-;; Initialize fresh state
-(audio/dispose-audio-webview!)
-(audio/init-audio-service!)
+**Fix**: Implemented single-load policy - new loads immediately cancel existing ones with clear rejection message. Refactored state from `{:load-resolvers {}}` to `{:current-load-resolver nil}` to make the constraint explicit.
 
-;; Start two concurrent loads - BOTH currently succeed, creating resolver conflicts
-(def load1-promise (audio/load-audio!+ "dev/test-resources/audio-play-test-very-short.mp3" :id "first"))
-(def load2-promise (audio/load-audio!+ "dev/test-resources/audio-play-test-two-sentences.mp3" :id "second"))
-
-;; Check resolvers state - should show conflict
-@audio/!state
-;; ACTUAL BUG OBSERVED: Both resolvers exist initially {"first": {}, "second": {}},
-;; then "second" disappears, leaving only {"first": {}}
-;; This means first promise becomes orphaned (never resolves/rejects)
-
-;; BUG: First promise never resolves or rejects (orphaned promise)
-;; EXPECTED AFTER FIX: load1-promise should reject with "Load cancelled by new load operation"
-;; EXPECTED AFTER FIX: Only load2-promise should succeed and wait for user gesture
-```
-
-### Step 2: Document in dev/testing-audio-service.md
-Add the above test with expected behavior documentation.
-
-### Step 3: Issue Analysis
-Multiple concurrent loads can create orphaned promises and resolver conflicts.
-
-### Step 4: Solution Implementation
-Before starting a new load, reject any existing load promises and clear resolvers.
-
-```clojure
-;; In load-audio!+ function, add before creating new promise:
-;; Reject any existing load operations
-(doseq [[existing-id {:keys [reject]}] (:load-resolvers @!state)]
-  (reject (js/Error. "Load cancelled by new load operation")))
-(swap! !state assoc :load-resolvers {})
-```
-
-### Files to Edit
-- `/Users/pez/Projects/Meetup/joyride-at-vscode-live/.joyride/src/ai_presenter/audio_playback.cljs` (lines ~220-225)
-
-### Step 5: Validation Test
-Run the documented test from `dev/testing-audio-service.md` Test 1 to ensure it now passes.
-
-**🛑 STOP: Have human verify Fix 1 works before proceeding to Fix 2**
+**Result**: Only one load operation allowed at any time. Clean promise handling with no memory leaks.
 
 ---
 

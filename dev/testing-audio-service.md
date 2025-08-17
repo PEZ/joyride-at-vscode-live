@@ -236,7 +236,7 @@ These tests verify functionality that currently works correctly and should conti
 1. **Only one active load**: Service maintains at most one pending load operation
 2. **Immediate cancellation**: New load immediately cancels any existing pending load
 3. **Clear rejection**: Cancelled load promises reject with "Load cancelled by new load operation"
-4. **Clean state**: State shows only the most recent load operation
+4. **Clean state**: State shows only the most recent load operation with `(:current-load-resolver @audio/!state)`
 
 **Test Session**:
 ```clojure
@@ -250,9 +250,12 @@ These tests verify functionality that currently works correctly and should conti
 (def load2-promise (audio/load-audio!+ "dev/test-resources/audio-play-test-two-sentences.mp3" :id "second"))
 
 ;; Check internal state - should show only the most recent load
-@audio/!state
-;; EXPECTED AFTER FIX: Only {"second": {...}} resolver exists
-;; ACTUAL BUG: Both resolvers exist briefly, then "second" disappears, leaving only "first"
+(:current-load-resolver @audio/!state)
+;; EXPECTED AFTER FIX: Shows {:id "second"} - singular resolver structure
+;; OLD BUG (BEFORE FIX): Both resolvers existed briefly, then "second" disappeared, leaving only "first"
+
+;; NOTE: If this returns nil, the resolver was already consumed (load completed/failed)
+;; To see active resolvers, check immediately after load creation or during user gesture wait
 
 ;; Test promise behavior - first should be rejected, second should be active
 (js/Promise.
@@ -274,13 +277,13 @@ These tests verify functionality that currently works correctly and should conti
 **Expected Behavior (after fix)**:
 - ✅ `load1-promise` should reject immediately with "Load cancelled by new load operation"
 - ✅ `load2-promise` should become the active operation, waiting for user gesture
-- ✅ `@audio/!state` should show only one resolver for "second" id
+- ✅ `(:current-load-resolver @audio/!state)` should show `{:id "second"}` - singular resolver structure
 - ✅ No orphaned promises or memory leaks
 
 **Current Behavior (FIXED in Fix 1)**:
-- ✅ Only one resolver exists (single-load principle enforced)
+- ✅ Only one singular resolver exists (single-load principle enforced)
 - ✅ First promise properly rejected with clear message
-- ✅ State is consistent (only most recent load operation tracked)
+- ✅ State is consistent with `current-load-resolver` structure (not confusing map)
 - ✅ No orphaned promises or memory leaks
 
 **Previous Behavior (before fix)**:
@@ -371,21 +374,18 @@ These tests verify functionality that currently works correctly and should conti
 ```clojure
 ;; NOTE: Can use existing session state - no need for fresh webview
 ;; Check current resolver state as baseline
-(def initial-resolvers (get-in @audio/!state [:load-resolvers]))
-(def initial-count (count initial-resolvers))
+(def initial-resolver (:current-load-resolver @audio/!state))
 
 ;; Add load with specific ID to existing state
 (def test-load (audio/load-audio!+ "dev/test-resources/audio-play-test-very-short.mp3" :id "test-123"))
 
-;; Verify resolver was added correctly
-(def updated-resolvers (get-in @audio/!state [:load-resolvers]))
-(def updated-count (count updated-resolvers))
+;; Verify resolver was set correctly (should replace any existing one)
+(def updated-resolver (:current-load-resolver @audio/!state))
 
 ;; Test ID validation logic
-{:initial-count initial-count
- :updated-count updated-count
- :has-test-123 (contains? updated-resolvers "test-123")
- :resolver-ids (keys updated-resolvers)}
+{:initial-resolver initial-resolver
+ :updated-resolver updated-resolver
+ :has-test-123 (= (:id updated-resolver) "test-123")}
 
 ;; BUG: The issue would be in webview message handling where wrong resolvers get used
 ;; This is more about message routing than state management

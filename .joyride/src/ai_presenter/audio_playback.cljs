@@ -16,7 +16,7 @@
 
 (defonce !state (atom {:webview nil
                        :status-resolvers {}
-                       :load-resolvers {}
+                       :current-load-resolver nil  ; Single resolver for the one allowed load operation
                        :last-known-status nil}))
 
 ;; =============================================================================
@@ -50,14 +50,21 @@
   (assoc-in state [:status-resolvers id] resolver))
 
 (defn add-load-resolver
-  "Pure function: Add a load resolver to state"
-  [state id resolver]
-  (assoc-in state [:load-resolvers id] resolver))
+  "Pure function: Set the current load resolver (only one allowed)"
+  [state resolver-map]
+  (assoc state :current-load-resolver resolver-map))
 
 (defn remove-resolver
   "Pure function: Remove a resolver from state"
   [state resolver-type id]
-  (update state resolver-type dissoc id))
+  (if (= resolver-type :current-load-resolver)
+    (assoc state :current-load-resolver nil)
+    (update state resolver-type dissoc id)))
+
+(defn clear-current-load-resolver
+  "Pure function: Clear the current load resolver"
+  [state]
+  (assoc state :current-load-resolver nil))
 
 (defn update-last-status
   "Pure function: Update the cached status"
@@ -136,33 +143,28 @@
        (let [load-data (js->clj message :keywordize-keys true)
              current-state @!state
              audio-id (or (:id load-data) "default")]
-         ;; Try to find resolver by ID, or any resolver if ID not found
-         (if-let [resolver-map (get-in current-state [:load-resolvers audio-id])]
-           (do
-             ((:resolve resolver-map) load-data)
-             (swap! !state remove-resolver :load-resolvers audio-id))
-           ;; If no resolver found for the specific ID, try to resolve any pending resolver
-           (when-let [[found-id resolver-map] (first (:load-resolvers current-state))]
-             (println "🔧 No resolver for audio-id" audio-id ", using" found-id)
-             ((:resolve resolver-map) load-data)
-             (swap! !state remove-resolver :load-resolvers found-id)))))
+         ;; Check if we have a current load resolver and if IDs match
+         (if-let [resolver-map (:current-load-resolver current-state)]
+           (if (= (:id resolver-map) audio-id)
+             (do
+               ((:resolve resolver-map) load-data)
+               (swap! !state clear-current-load-resolver))
+             (println "⚠️ Audio ready for ID" audio-id "but current resolver is for" (:id resolver-map)))
+           (println "⚠️ Audio ready notification but no current load resolver"))))
      ;; Handle audio load error notifications
      (when (= (.-type message) "audioLoadError")
        (println "❌ Audio load error notification received!")
        (let [error-data (js->clj message :keywordize-keys true)
              current-state @!state
              audio-id (or (:id error-data) "default")]
-         ;; Try to find any resolver (since webview might not send the correct ID)
-         (if-let [resolver-map (get-in current-state [:load-resolvers audio-id])]
-           (do
-             ;; Reject the promise with error details
-             ((:reject resolver-map) (js/Error. (:error error-data)))
-             (swap! !state remove-resolver :load-resolvers audio-id))
-           ;; If no resolver found for the specific ID, try to reject any pending resolver
-           (when-let [[found-id resolver-map] (first (:load-resolvers current-state))]
-             (println "🔧 No resolver for audio-id" audio-id ", using" found-id)
-             ((:reject resolver-map) (js/Error. (:error error-data)))
-             (swap! !state remove-resolver :load-resolvers found-id)))))
+         ;; Check if we have a current load resolver and if IDs match
+         (if-let [resolver-map (:current-load-resolver current-state)]
+           (if (= (:id resolver-map) audio-id)
+             (do
+               ((:reject resolver-map) (js/Error. (:error error-data)))
+               (swap! !state clear-current-load-resolver))
+             (println "⚠️ Audio error for ID" audio-id "but current resolver is for" (:id resolver-map)))
+           (println "⚠️ Audio error notification but no current load resolver"))))
      message))
   (:webview @!state))
 
@@ -219,14 +221,14 @@
   (try
     (let [audio-id (or id "default")
           absolute-path (ensure-absolute-path local-file-path)]
-      ;; Reject any existing load operations
-      (doseq [[_existing-id {:keys [reject]}] (:load-resolvers @!state)]
+      ;; Reject any existing load operation
+      (when-let [{:keys [reject]} (:current-load-resolver @!state)]
         (reject (js/Error. "Load cancelled by new load operation")))
-      (swap! !state assoc :load-resolvers {})
+      (swap! !state clear-current-load-resolver)
       (p/create
        (fn [resolve reject]
-         ;; Store both resolve and reject functions
-         (swap! !state add-load-resolver audio-id {:resolve resolve :reject reject})
+         ;; Store both resolve and reject functions for the single allowed load
+         (swap! !state add-load-resolver {:resolve resolve :reject reject :id audio-id})
          ;; Send load command using existing function
          (let [webview (:webview @!state)
                audio-uri (.asWebviewUri (.-webview webview) (vscode/Uri.file absolute-path))]
@@ -235,7 +237,7 @@
          ;; Enhanced timeout with status check
          (js/setTimeout
           #(p/let [final-status (get-audio-status!+)]
-             (swap! !state remove-resolver :load-resolvers audio-id)
+             (swap! !state clear-current-load-resolver)
              (if (and (:audioDataReady final-status)
                       (not (:userGestureComplete final-status)))
                ;; Audio data loaded but waiting for user gesture
