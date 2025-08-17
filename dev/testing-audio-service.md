@@ -331,8 +331,10 @@ These tests verify functionality that currently works correctly and should conti
 
 #### Test 3: Promise Race Conditions in play-audio!+
 
-**Status**: 🔴 CURRENTLY FAILS - Second status request creates race condition
+**Status**: ✅ SHOULD PASS - Fix 3 implemented: Removed immediate status fetch after play command
 **Dependencies**: Relies on session initialization
+
+**🔧 IMPLEMENTATION NOTE**: Removed `:status-after` from `play-audio!+` return value to eliminate race condition. Function now returns immediately after sending play command.
 
 **Test Session**:
 ```clojure

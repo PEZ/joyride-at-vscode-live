@@ -7,7 +7,7 @@
 - [x] **Fix 0: CRITICAL - User Gesture Playback Failure** - Status: ✅ COMPLETED 2025-08-17
 - [x] **Fix 1: Prevent Concurrent Audio Loads** - Status: ✅ COMPLETED 2025-08-18
 - [x] **Fix 2: Fix Premature "Playing" Status in Webview** - Status: ✅ COMPLETED 2025-08-18
-- [ ] **Fix 3: Remove Race Condition in play-audio!+** - Status: Not Started
+- [x] **Fix 3: Remove Race Condition in play-audio!+** - Status: ✅ COMPLETED 2025-08-18
 - [ ] **Fix 4: Improve Resolver ID Validation** - Status: Not Started
 - [ ] **Fix 5: Add Missing Audio Event Handlers in Webview** - Status: Not Started
 - [ ] **Fix 6: Improve Error Messages in Timeout Handler** - Status: Not Started
@@ -132,13 +132,18 @@ Remove the second status fetch and rely on the pre-play status check only.
        :status-after new-status}))
 
 ;; AFTER:
-(if (:ready? readiness)
-  (do
-    (send-audio-command! :play {:id (or id "default")})
-    {:success true
-     :action :played
-     :readiness readiness
-     :status-before status})
+## Fix 3: Remove Race Condition in play-audio!+ ✅
+**File**: `audio_playback.cljs`
+**Function**: `play-audio!+`
+**Priority**: High (causes inaccurate status reporting)
+
+### Issue
+Second status request happens immediately after play command, before audio actually starts.
+
+### Solution
+Remove the second status fetch and rely on the pre-play status check only.
+
+**Result**: Eliminated race condition - no more immediate status fetch after play command.
 ```
 
 ### Files to Edit

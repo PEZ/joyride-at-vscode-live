@@ -194,13 +194,10 @@
     (if (:ready? readiness)
       (do
         (send-audio-command! :play {:id (or id "default")})
-        ;; Get updated status after play command
-        (p/let [new-status (get-audio-status!+)]
-          {:success true
-           :action :played
-           :readiness readiness
-           :status-before status
-           :status-after new-status}))
+        {:success true
+         :action :played
+         :readiness readiness
+         :status-before status})
       {:success false
        :action :blocked
        :readiness readiness
