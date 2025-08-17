@@ -107,7 +107,7 @@ The file `dev/testing-audio-service.md` will contain:
 
 ---
 
-## Fix 3: Remove Race Condition in play-audio!+
+## Fix 3: Remove Race Condition in play-audio!+ ✅ COMPLETED
 **File**: `audio_playback.cljs`
 **Function**: `play-audio!+`
 **Priority**: High (causes inaccurate status reporting)
@@ -118,46 +118,7 @@ Second status request happens immediately after play command, before audio actua
 ### Solution
 Remove the second status fetch and rely on the pre-play status check only.
 
-```clojure
-;; BEFORE:
-(if (:ready? readiness)
-  (do
-    (send-audio-command! :play {:id (or id "default")})
-    ;; Get updated status after play command
-    (p/let [new-status (get-audio-status!+)]
-      {:success true
-       :action :played
-       :readiness readiness
-       :status-before status
-       :status-after new-status}))
-
-;; AFTER:
-## Fix 3: Remove Race Condition in play-audio!+ ✅
-**File**: `audio_playback.cljs`
-**Function**: `play-audio!+`
-**Priority**: High (causes inaccurate status reporting)
-
-### Issue
-Second status request happens immediately after play command, before audio actually starts.
-
-### Solution
-Remove the second status fetch and rely on the pre-play status check only.
-
-**Result**: Eliminated race condition - no more immediate status fetch after play command.
-```
-
-### Files to Edit
-- `/Users/pez/Projects/Meetup/joyride-at-vscode-live/.joyride/src/ai_presenter/audio_playback.cljs` (lines ~187-203)
-
-### Testing After Fix 3
-```clojure
-;; play-audio!+ should return immediately without :status-after
-(def result (audio/play-audio!+))
-;; Should not contain :status-after key
-(keys result)
-```
-
-**🛑 STOP: Have human verify Fix 3 works before proceeding to Fix 4**
+**Result**: Eliminated race condition - no more immediate status fetch after play command. Function now returns immediately after sending play command, allowing webview events to handle status updates naturally.
 
 ---
 
