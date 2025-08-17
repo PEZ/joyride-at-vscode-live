@@ -2,12 +2,18 @@
 
 This document contains REPL test sessions that expose bugs in the audio service. Each test should be run in the Joyride REPL to verify the audio service behaves correctly.
 
+**⚠️ AI AGENT LIMITATIONS**:
+- **Human interaction required**: AI cannot click "Enable Audio" button - human must do this
+- **Audio playback verification**: AI cannot hear audio - human ears required to validate actual playback
+- **User gesture dependency**: Many tests require human to complete browser security requirements
+
 ## How to Use This Document
 
 1. **Run tests to expose bugs**: Execute each test session to see current (buggy) behavior
 2. **Fix the code**: Implement fixes based on the bug plan
 3. **Validate fixes**: Re-run the same tests to ensure they now pass
 4. **Regression testing**: Use this document to ensure bugs don't reappear
+5. **Human verification**: Agent must ask human to verify audio playback and user interactions
 
 ## Setup for All Tests
 
@@ -24,6 +30,8 @@ This document contains REPL test sessions that expose bugs in the audio service.
 ;; Should show: {:userGestureComplete false, :audioLoaded false, ...}
 ```
 
+**🎛️ HUMAN INTERACTION NOTE**: Many tests require the human to click "Enable Audio" in the webview dialog. **Audio playback verification requires human ears** - the AI agent cannot determine if audio actually plays.
+
 ---
 
 ## Test 1: Concurrent Audio Load Handling
@@ -36,16 +44,20 @@ This document contains REPL test sessions that expose bugs in the audio service.
 (audio/dispose-audio-webview!)
 (audio/init-audio-service!)
 
-;; Start two concurrent loads
+;; Start two concurrent loads WITHOUT user gesture (to test resolver conflicts)
 (def load1-promise (audio/load-audio!+ "slides/voice/demo-tts.mp3" :id "first"))
 (def load2-promise (audio/load-audio!+ "slides/voice/demo-tts.mp3" :id "second"))
 
 ;; Check internal state for resolver conflicts
 @audio/!state
-;; BUG: May show multiple resolvers or wrong resolver mappings
+;; ACTUAL BUG OBSERVED: Shows only {"first": {...}} - "second" resolver disappeared!
+;; This means second load overwrote first without rejecting it properly
+;; EXPECTED AFTER FIX: Only {"second": {...}} with first promise rejected
 
-;; Wait for promises to resolve/reject
-(js/Promise.all [load1-promise load2-promise])
+;; 🎛️ HUMAN: Click "Enable Audio" button in webview to complete the test
+;; Then check what happens to the promises:
+;; BUG: Both may resolve or wrong resolver used
+;; EXPECTED: load1-promise rejects with "Load cancelled", load2-promise succeeds
 ```
 
 **Expected Behavior (after fix)**:
@@ -70,12 +82,14 @@ This document contains REPL test sessions that expose bugs in the audio service.
 ;; Setup fresh state and load audio
 (audio/dispose-audio-webview!)
 (audio/init-audio-service!)
-(audio/load-and-play-audio!+ "slides/voice/demo-tts.mp3")  ;; Human must click Enable Audio
+
+;; 🎛️ HUMAN: This will prompt you to click "Enable Audio" - do so to proceed
+(audio/load-and-play-audio!+ "slides/voice/demo-tts.mp3")
 
 ;; Test immediate status after play command
 (def play-result (audio/play-audio!+))
 (get-in play-result [:status-after :playbackState])
-;; BUG: Shows "playing" immediately
+;; BUG: Shows "playing" immediately, before audio actually starts
 
 ;; Check actual status after delay
 (js/Promise.
@@ -85,12 +99,17 @@ This document contains REPL test sessions that expose bugs in the audio service.
           (.then resolve)
           (.catch reject))
      2000)))
-;; Should show actual final state
+;; May show "stopped" indicating audio finished - proving status was wrong
+
+;; 🎛️ HUMAN VERIFICATION REQUIRED:
+;; Did you actually hear audio playing when status reported "playing"?
+;; This test requires human ears to validate audio playback timing.
 ```
 
 **Expected Behavior (after fix)**:
 - ✅ `play-audio!+` should not report "playing" until audio actually starts
 - ✅ Status should accurately reflect actual audio element state
+- ✅ **Human can confirm audio timing matches status reports**
 - ✅ No race conditions between command and status
 
 **Current Behavior (bug)**:
@@ -230,16 +249,18 @@ This document contains REPL test sessions that expose bugs in the audio service.
 Execute this to run a comprehensive test suite:
 
 ```clojure
-;; Comprehensive test runner
+;; Comprehensive test runner - ⚠️ REQUIRES HUMAN INTERACTION
 (defn run-audio-regression-tests []
   (println "🧪 Running Audio Service Regression Tests...")
+  (println "⚠️  HUMAN: You will need to click 'Enable Audio' for several tests")
+  (println "👂 HUMAN: You will need to verify actual audio playback with your ears")
 
   ;; Test 1: Concurrent loads
   (println "\n📋 Test 1: Concurrent Load Handling")
   ;; ... run test 1 code ...
 
   ;; Test 2: Status accuracy
-  (println "\n📋 Test 2: Playing Status Accuracy")
+  (println "\n📋 Test 2: Playing Status Accuracy - REQUIRES HUMAN EARS")
   ;; ... run test 2 code ...
 
   ;; Continue for all tests...
@@ -251,3 +272,10 @@ Execute this to run a comprehensive test suite:
 ```
 
 **After all fixes are complete, all tests in this document should pass without errors.**
+
+**🎛️ TESTING WORKFLOW FOR AI AGENTS**:
+1. **AI runs REPL tests** to expose bugs and check internal state
+2. **AI asks human** to perform required user interactions (clicking buttons)
+3. **AI asks human** to verify audio playback behavior with their ears
+4. **AI validates** promise resolution, state changes, and error messages
+5. **Human confirms** the user experience is correct
