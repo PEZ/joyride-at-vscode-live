@@ -473,9 +473,9 @@ These tests verify functionality that currently works correctly and should conti
 - ❌ Ambiguous between timeout and other failures
 - ❌ Missing timeout duration in error messages---
 
-## 🔄 SESSION RESET (Verify Clean Shutdown)
+## 🔄 SESSION RESET & RE-ENABLEMENT TEST (Verify Clean Shutdown + Gesture Re-activation)
 
-**Purpose**: Confirm that the audio service can be cleanly reset for the next testing session.
+**Purpose**: Confirm that the audio service can be cleanly reset for the next testing session AND that after reset, the gesture can successfully enable sound again with working playback.
 
 ```clojure
 ;; Test clean disposal and re-initialization
@@ -497,13 +497,64 @@ These tests verify functionality that currently works correctly and should conti
 ;; EXPECTED: false
 ```
 
+### 🎵 POST-RESET GESTURE RE-ENABLEMENT TEST
+
+**Purpose**: After reset, verify that the user gesture can successfully re-enable audio and that sound playback actually works. This ensures the reset doesn't leave the service in a broken state.
+
+**🤝 HUMAN INTERACTION REQUIRED**: This test requires the user to confirm audio playback works after reset.
+
+```clojure
+;; Load test audio in the fresh, reset service
+;; NOTE: In current implementation, this may automatically complete user gesture
+(require '[promesa.core :as p])
+(audio/load-audio!+ "dev/test-resources/audio-play-test-two-sentences.mp3")
+
+;; Verify user gesture status after load
+(p/let [gesture-status (audio/check-user-gesture!+)]
+  (def gesture-complete gesture-status))
+gesture-complete
+;; EXPECTED: true (may be automatically completed in current implementation)
+
+;; Test actual playback to verify the reset service works end-to-end
+(p/let [play-result (audio/play-audio!+)]
+  (def play-result-data play-result))
+;; 👂 HUMAN: Confirm you hear audio playback (6.984 seconds of speech)
+;; This validates that the reset service can still play audio correctly
+
+;; Verify final status shows working audio service
+(p/let [final-status (audio/get-audio-status!+)]
+  (def resolved-final-status final-status))
+
+;; Critical validation of all test assertions
+{:test-results
+ {:gesture-complete (:userGestureComplete resolved-final-status)
+  :audio-loaded (:audioLoaded resolved-final-status)
+  :no-errors (nil? (:lastError resolved-final-status))
+  :playback-state (:playbackState resolved-final-status)
+  :play-success (:success play-result-data)
+  :all-assertions-pass? (and (:userGestureComplete resolved-final-status)
+                             (:audioLoaded resolved-final-status)
+                             (nil? (:lastError resolved-final-status))
+                             (:success play-result-data))}}
+
+;; CRITICAL ASSERTIONS:
+;; ✅ play-audio!+ should return success: true
+;; ✅ lastError should be nil (not user gesture error)
+;; ✅ userGestureComplete should be true
+;; ✅ playbackState should be "playing" or "stopped" (not error state)
+;; ❌ CRITICAL FAILURE if lastError contains "play() can only be initiated by a user gesture"
+```
+
 **Expected Behavior**:
 - ✅ Clean disposal removes previous webview state
 - ✅ Re-initialization creates fresh service
 - ✅ User gesture requirement is reset for next session
+- ✅ **NEW**: After reset, user gesture can be completed again
+- ✅ **NEW**: After reset + gesture, audio playback works correctly
+- ✅ **NEW**: No lingering user gesture errors in reset service
 - ✅ Ready for next testing cycle
 
-**🎯 SESSION COMPLETE**: Audio service reset and ready for next testing cycle.
+**🎯 ENHANCED SESSION COMPLETE**: Audio service reset, gesture re-enablement confirmed, and playback validated working.
 
 ---
 
@@ -543,11 +594,14 @@ Run each test in sequence, updating todo list:
 5. **Bug Test 5**: Mark in-progress → Execute Missing Audio Event Handling → Mark completed
 6. **Bug Test 6**: Mark in-progress → Execute Timeout Error Messages → Mark completed
 
-#### **5. Session Reset**
-1. Mark "Session Reset" as in-progress
-2. Execute Session Reset code block
-3. Mark "Session Reset" as completed
-4. Mark overall "Audio Service Regression Test Plan" as completed
+#### **5. Session Reset & Re-enablement Test**
+1. Mark "Session Reset & Re-enablement Test" as in-progress
+2. Execute Session Reset code block (clean shutdown)
+3. Execute Post-Reset Gesture Re-enablement Test code block
+4. **Human**: Click "Enable Audio" when prompted by the agent (second time)
+5. **Human**: Confirm you hear the 6.984s audio playback (validates working after reset)
+6. Mark "Session Reset & Re-enablement Test" as completed
+7. Mark overall "Audio Service Regression Test Plan" as completed
 
 ### 📊 **Expected Results**
 - **Baseline Tests**: Should all PASS ✅ (protecting existing functionality)
