@@ -15,19 +15,33 @@
 This plan addresses critical bugs in the audio service status reporting and timing issues. The fixes are ordered by dependency and impact.
 
 ## Development Methodology
-**🔧 INTERACTIVE PROGRAMMING MODE**: This plan should be executed using interactive programming techniques with the Joyride REPL.
+**🔧 TEST-DRIVEN BUG FIXING**: Each fix starts by documenting the bug with a failing REPL test, then implementing the fix until the test passes.
 
 ### Required Tools
 - **Joyride Evaluation Tool**: Use `joyride_evaluate_code` for all testing and experimentation
 - **REPL-Driven Development**: Test each change immediately in the REPL before committing to files
-- **Live Feedback Loop**: Continuously evaluate expressions to understand current behavior
+- **Regression Test Documentation**: Document failing tests in `dev/testing-audio-service.md`
+
+### Test-Driven Fix Workflow
+1. **Expose the problem**: Create REPL session that demonstrates the bug
+2. **Document the test**: Write the failing test in `dev/testing-audio-service.md`
+3. **Implement the fix**: Edit files to resolve the issue
+4. **Validate the fix**: Ensure the documented test now passes
+5. **Update documentation**: Mark the test as "SHOULD PASS" when fixed
+
+### Regression Test Document
+The file `dev/testing-audio-service.md` will contain:
+- **Bug demonstration tests**: REPL sessions that expose each issue
+- **Expected vs actual behavior**: Clear documentation of what should happen
+- **Post-fix validation**: Same tests that should pass after fixes
+- **Regression prevention**: Future testing to ensure bugs don't return
 
 ### Interactive Programming Workflow
 1. **Load the namespace**: `(require '[ai-presenter.audio-playback :as audio] :reload)`
-2. **Examine current state**: `@audio/!state`
-3. **Test current behavior**: Use provided test expressions for each fix
+2. **Expose the bug**: Create REPL test showing the problem
+3. **Document the test**: Add to regression test document
 4. **Make incremental changes**: Edit files, reload, test immediately
-5. **Validate fixes**: Use REPL to verify each fix works as expected
+5. **Validate fixes**: Ensure documented test now passes
 
 ### Example REPL Session
 ```clojure
@@ -67,10 +81,33 @@ This plan addresses critical bugs in the audio service status reporting and timi
 **Function**: `load-audio!+`
 **Priority**: High (affects promise resolution reliability)
 
-### Issue
+### Step 1: Expose the Problem with REPL Test
+**First, create a REPL session that demonstrates the concurrent load bug:**
+
+```clojure
+;; Initialize fresh state
+(audio/dispose-audio-webview!)
+(audio/init-audio-service!)
+
+;; Start two concurrent loads - BOTH currently succeed, creating resolver conflicts
+(def load1-promise (audio/load-audio!+ "slides/voice/demo-tts.mp3" :id "first"))
+(def load2-promise (audio/load-audio!+ "slides/voice/demo-tts.mp3" :id "second"))
+
+;; Check resolvers state - should show conflict
+@audio/!state
+
+;; BUG: Both promises may resolve, or wrong resolver used
+;; EXPECTED: load1-promise should reject with "Load cancelled by new load operation"
+;; EXPECTED: Only load2-promise should succeed
+```
+
+### Step 2: Document in dev/testing-audio-service.md
+Add the above test with expected behavior documentation.
+
+### Step 3: Issue Analysis
 Multiple concurrent loads can create orphaned promises and resolver conflicts.
 
-### Solution
+### Step 4: Solution Implementation
 Before starting a new load, reject any existing load promises and clear resolvers.
 
 ```clojure
@@ -84,13 +121,8 @@ Before starting a new load, reject any existing load promises and clear resolver
 ### Files to Edit
 - `/Users/pez/Projects/Meetup/joyride-at-vscode-live/.joyride/src/ai_presenter/audio_playback.cljs` (lines ~220-225)
 
-### Testing After Fix 1
-```clojure
-;; Test concurrent loads - second should cancel first
-(def load1 (audio/load-audio!+ "slides/voice/demo-tts.mp3" :id "first"))
-(def load2 (audio/load-audio!+ "slides/voice/demo-tts.mp3" :id "second"))
-;; load1 should reject with "Load cancelled by new load operation"
-```
+### Step 5: Validation Test
+Run the documented test from `dev/testing-audio-service.md` Test 1 to ensure it now passes.
 
 **🛑 STOP: Have human verify Fix 1 works before proceeding to Fix 2**
 
@@ -101,10 +133,32 @@ Before starting a new load, reject any existing load promises and clear resolver
 **Function**: `playAudio()`
 **Priority**: Critical (main bug causing false status reports)
 
-### Issue
+### Step 1: Expose the Problem with REPL Test
+**Run the test from `dev/testing-audio-service.md` Test 2 to see the bug:**
+
+```clojure
+;; This demonstrates the premature "playing" status bug
+(def play-result (audio/play-audio!+))
+(get-in play-result [:status-after :playbackState])
+;; BUG: Shows "playing" immediately, before audio actually starts
+
+;; Check real status after delay
+(js/Promise.
+ (fn [resolve reject]
+   (js/setTimeout
+     #(-> (audio/get-audio-status!+)
+          (.then resolve))
+     2000)))
+;; May show "stopped" indicating audio finished, proving it wasn't "playing" when reported
+```
+
+### Step 2: Update Regression Test
+Ensure `dev/testing-audio-service.md` Test 2 documents this exact behavior.
+
+### Step 3: Issue Analysis
 `audioStatus.playbackState = 'playing'` is set before `audio.play()` actually starts.
 
-### Solution
+### Step 4: Solution Implementation
 Move status update inside the promise success handler.
 
 ```javascript
@@ -362,12 +416,16 @@ After each fix:
 - ✅ Concurrent loads properly reject previous operations
 - ✅ Clear error messages for all failure modes
 - ✅ No orphaned promises or memory leaks
+- ✅ **All regression tests in `dev/testing-audio-service.md` pass**
 
 ## Final Notes
+- **TEST-DRIVEN APPROACH REQUIRED**: Each fix starts by exposing the bug with REPL tests
+- **Regression Testing**: Document all failing tests in `dev/testing-audio-service.md`
 - **INTERACTIVE PROGRAMMING REQUIRED**: Use Joyride evaluation tool for all development
 - Each fix should be implemented individually with REPL testing
 - Human testing and approval required before proceeding to next fix
 - Use `(require '[ai-presenter.audio-playback :as audio] :reload)` after each file change
 - Examine `@audio/!state` frequently to understand system behavior
 - Test both success and error paths in the REPL before marking fixes complete
+- **Final deliverable**: Robust audio service + comprehensive regression test suite
 - Update this document's progress checkboxes as fixes are completed
