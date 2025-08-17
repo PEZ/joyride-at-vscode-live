@@ -57,11 +57,11 @@ The file `dev/testing-audio-service.md` will contain:
 (audio/check-user-gesture!+)    ;; Should return false
 
 ;; Test load without user gesture - should fail gracefully
-(audio/load-audio!+ "slides/voice/demo-tts.mp3")
-;; Should get: "Audio loaded but requires user gesture. Duration: 1.104s. Please click 'Enable Audio'."
+(audio/load-audio!+ "dev/test-resources/audio-play-test-very-short.mp3")
+;; Should get: "Audio loaded but requires user gesture. Duration: 1.176s. Please click 'Enable Audio'."
 
 ;; Test load-and-play - should prompt user automatically
-(audio/load-and-play-audio!+ "slides/voice/demo-tts.mp3")
+(audio/load-and-play-audio!+ "dev/test-resources/audio-play-test-two-sentences.mp3")
 ;; Should show VS Code dialog asking user to enable audio
 
 ;; After user clicks Enable Audio, test normal operations
@@ -74,7 +74,7 @@ The file `dev/testing-audio-service.md` will contain:
 
 **⚠️ CRITICAL**: Every code change should be tested in the Joyride REPL before being considered complete.
 
-**🎛️ HUMAN INTERACTION REQUIRED**: When testing, the human must click "Enable Audio" in the webview dialog when prompted.
+**🎛️ HUMAN INTERACTION NOTE**: Many tests require the human to click "Enable Audio" in the webview dialog. **Audio playback verification requires human ears** - the AI agent cannot determine if audio actually plays.
 
 ## Fix 1: Prevent Concurrent Audio Loads
 **File**: `audio_playback.cljs`
@@ -90,8 +90,8 @@ The file `dev/testing-audio-service.md` will contain:
 (audio/init-audio-service!)
 
 ;; Start two concurrent loads - BOTH currently succeed, creating resolver conflicts
-(def load1-promise (audio/load-audio!+ "slides/voice/demo-tts.mp3" :id "first"))
-(def load2-promise (audio/load-audio!+ "slides/voice/demo-tts.mp3" :id "second"))
+(def load1-promise (audio/load-audio!+ "dev/test-resources/audio-play-test-very-short.mp3" :id "first"))
+(def load2-promise (audio/load-audio!+ "dev/test-resources/audio-play-test-two-sentences.mp3" :id "second"))
 
 ;; Check resolvers state - should show conflict
 @audio/!state
@@ -271,7 +271,7 @@ Add strict validation and clear error logging for ID mismatches.
 ### Testing After Fix 4
 ```clojure
 ;; Test with mismatched ID - should show clear error
-(audio/load-audio!+ "slides/voice/demo-tts.mp3" :id "test-id")
+(audio/load-audio!+ "dev/test-resources/audio-play-test-very-short.mp3" :id "test-id")
 ;; Manually trigger webview message with different ID to see validation
 ```
 
@@ -369,7 +369,7 @@ After each fix:
 1. **Initialize fresh state**: `(audio/dispose-audio-webview!)` then `(audio/init-audio-service!)`
 2. **Reload namespace**: `(require '[ai-presenter.audio-playback :as audio] :reload)`
 3. **Test with fresh webview**: `(audio/get-audio-status!+)` should show `userGestureComplete: false`
-4. **Test basic functionality**: `(audio/load-and-play-audio!+ "slides/voice/demo-tts.mp3")` (requires human to click Enable Audio)
+4. **Test basic functionality**: `(audio/load-and-play-audio!+ "dev/test-resources/audio-play-test-two-sentences.mp3")` (requires human to click Enable Audio)
 5. **Check immediate status**: `(audio/get-audio-status!+)`
 6. **Verify final state**: Use `js/setTimeout` with promise to check status after delay
 7. **Test error cases**: Invalid file paths, concurrent operations
