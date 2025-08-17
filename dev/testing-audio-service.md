@@ -402,35 +402,46 @@ These tests verify functionality that currently works correctly and should conti
 
 #### Test 5: Missing Audio Event Handling
 
-**Status**: 🔴 CURRENTLY FAILS - Missing handlers for some audio events
+**Status**: ✅ SHOULD PASS - Fix 5 implemented: Added comprehensive event handlers for waiting, stalled, suspend
 **Dependencies**: Relies on session initialization
+
+**🔧 IMPLEMENTATION NOTE**: Added missing event handlers for `waiting`, `stalled`, and `suspend` events to improve status tracking during network issues and buffering states.
 
 **Test Session**:
 ```clojure
 ;; NOTE: This test requires observing webview behavior
-;; The bug is that certain audio events don't have handlers
+;; The bug was that certain audio events didn't have handlers
 ;; We can test this by checking the event registration
 
 ;; After Session Initialization, the webview should handle all audio events
-;; The specific events missing handlers are: 'waiting', 'stalled', 'suspend'
-;; This would manifest as incomplete status updates during network issues
+;; The specific events that were missing handlers: 'waiting', 'stalled', 'suspend'
+;; These events now have proper handlers that update playbackState and UI
 
-;; Load audio and check status reporting completeness
+;; Load audio and verify the webview handles events properly
 (audio/load-audio!+ "dev/test-resources/audio-play-test-two-sentences.mp3")
+;; EXPECTED AFTER FIX: Normal load behavior with enhanced event handling
 
-;; The bug would show up as missing status updates for certain audio states
-;; This is primarily observable in webview logs and status accuracy
+;; The new event handlers will show up in webview logs when triggered:
+;; - 'waiting' events → playbackState = 'loading', status = "Loading more data..."
+;; - 'stalled' events → playbackState = 'stalled', status = "Network stalled"
+;; - 'suspend' events → playbackState = 'suspended', status = "Loading suspended"
+
+;; Check that basic audio operations still work with new handlers
+(audio/get-audio-status!+)
+;; EXPECTED: Normal status response, no interference from new event handlers
 ```
 
 **Expected Behavior (after fix)**:
 - ✅ Comprehensive event handlers for all relevant audio events
 - ✅ Status updates for waiting, stalled, suspend states
 - ✅ Better status accuracy during network issues
+- ✅ Enhanced logging for debugging network-related audio problems
+- ✅ No interference with existing audio functionality
 
-**Current Behavior (bug)**:
+**Previous Behavior (before fix)**:
 - ❌ Missing event handlers for some audio states
-- ❌ Incomplete status tracking
-- ❌ Potential status inconsistencies during network issues
+- ❌ Incomplete status tracking during buffering/network issues
+- ❌ Limited visibility into audio loading problems
 
 #### Test 6: Timeout Error Messages
 

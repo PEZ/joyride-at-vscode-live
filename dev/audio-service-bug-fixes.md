@@ -9,7 +9,7 @@
 - [x] **Fix 2: Fix Premature "Playing" Status in Webview** - Status: ✅ COMPLETED 2025-08-18
 - [x] **Fix 3: Remove Race Condition in play-audio!+** - Status: ✅ COMPLETED 2025-08-18
 - [x] **Fix 4: Improve Resolver ID Validation** - Status: ✅ COMPLETED 2025-08-18
-- [ ] **Fix 5: Add Missing Audio Event Handlers in Webview** - Status: Not Started
+- [x] **Fix 5: Add Missing Audio Event Handlers in Webview** - Status: ✅ COMPLETED 2025-08-18
 - [ ] **Fix 6: Improve Error Messages in Timeout Handler** - Status: Not Started
 
 ## Overview
@@ -137,44 +137,15 @@ Enhanced ID validation with user-visible error messages and proper promise rejec
 
 ---
 
-## Fix 5: Add Missing Audio Event Handlers in Webview
+## Fix 5: Add Missing Audio Event Handlers in Webview ✅ COMPLETED
 **File**: `audio-service.html`
 **Priority**: Medium (improves status accuracy)
 
 ### Issue
 Missing handlers for `waiting`, `stalled`, `suspend` events leads to incomplete status tracking.
 
-### Solution
-Add comprehensive event listeners for better state tracking.
-
-```javascript
-// Add after existing event listeners:
-audio.addEventListener('waiting', () => {
-    log('Audio: waiting - loading more data');
-    audioStatus.playbackState = 'loading';
-});
-
-audio.addEventListener('stalled', () => {
-    log('Audio: stalled - network issues');
-    audioStatus.playbackState = 'stalled';
-});
-
-audio.addEventListener('suspend', () => {
-    log('Audio: suspend - loading suspended');
-    audioStatus.playbackState = 'suspended';
-});
-```
-
-### Files to Edit
-- `/Users/pez/Projects/Meetup/joyride-at-vscode-live/.joyride/resources/audio-service.html` (lines ~250-260)
-
-### Testing After Fix 5
-```clojure
-;; Load a large audio file or simulate network issues to trigger new events
-;; Check webview logs for new event types
-```
-
-**🛑 STOP: Have human verify Fix 5 works before proceeding to Fix 6**
+### Result
+Enhanced event handling provides comprehensive status tracking for all audio states including buffering and network issues. Better visibility into audio loading problems with proper UI updates and logging.
 
 ---
 

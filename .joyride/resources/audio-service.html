@@ -354,6 +354,28 @@
             log('Audio: volume changed to ' + audio.volume);
         });
 
+        // Fix 5: Add missing audio event handlers for better state tracking
+        audio.addEventListener('waiting', () => {
+            log('Audio: waiting - loading more data');
+            audioStatus.playbackState = 'loading';
+            updateStatus('Loading more data...', 'info');
+            updatePlayPauseButton();
+        });
+
+        audio.addEventListener('stalled', () => {
+            log('Audio: stalled - network issues');
+            audioStatus.playbackState = 'stalled';
+            updateStatus('Network stalled', 'error');
+            updatePlayPauseButton();
+        });
+
+        audio.addEventListener('suspend', () => {
+            log('Audio: suspend - loading suspended');
+            audioStatus.playbackState = 'suspended';
+            updateStatus('Loading suspended', 'info');
+            updatePlayPauseButton();
+        });
+
         // Message handler from Joyride
         window.addEventListener('message', event => {
             const message = event.data;
