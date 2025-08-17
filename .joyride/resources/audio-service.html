@@ -92,7 +92,7 @@
             log('User clicked enable audio button - gesture captured');
             userGestureComplete = true;
             audioStatus.userGestureComplete = true;
-            
+
             // CRITICAL FIX: Unlock audio element for future programmatic playback
             // We must interact with audio element during user gesture to satisfy browser security
             try {
@@ -116,7 +116,7 @@
             } catch (err) {
                 log('Audio unlock error: ' + err.message + ' - proceeding anyway');
             }
-            
+
             updateStatus('Audio enabled and unlocked', 'success');
 
             // Check if we can now mark audio as fully ready

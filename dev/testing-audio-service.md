@@ -39,6 +39,8 @@ This document contains REPL test sessions that expose bugs in the audio service.
 
 **Purpose**: Establish a fully functional audio service with user gesture completed, then validate it works end-to-end. All subsequent tests rely on this initialized state.
 
+**🔍 INCLUDES CRITICAL REGRESSION TEST**: This initialization includes validation that Fix 0 (Critical User Gesture Bug) remains working - ensures audio playback succeeds after user gesture without the "play() can only be initiated by a user gesture" error.
+
 ```clojure
 ;; Load audio namespace
 (require '[ai-presenter.audio-playback :as audio] :reload)
@@ -55,14 +57,26 @@ This document contains REPL test sessions that expose bugs in the audio service.
 (audio/check-user-gesture!+)
 ;; EXPECTED: true
 
-;; Test actual playback to verify everything works
+;; Test actual playbook to verify everything works
 (audio/play-audio!+)
 ;; 👂 HUMAN: Confirm you hear audio playback (6.984 seconds of speech)
 ;; This validates the entire audio pipeline works end-to-end
 
+;; 🔍 REGRESSION TEST: Critical User Gesture Bug (Fix 0)
+;; This test validates that Fix 0 remains working - playbook succeeds after user gesture
+;; without the critical "play() can only be initiated by a user gesture" error
+(def playback-result (audio/play-audio!+))
+;; Validate that no user gesture error occurred
+(def final-status (audio/get-audio-status!+))
+;; CRITICAL ASSERTIONS (Fix 0 regression test):
+;; ✅ play-audio!+ should return success: true
+;; ✅ lastError should be nil (not user gesture error)
+;; ✅ playbackState should be "playing" or "stopped" (not error state)
+;; ❌ REGRESSION if lastError contains "play() can only be initiated by a user gesture"
+
 ;; Verify service is fully ready for subsequent tests
 (audio/get-audio-status!+)
-;; EXPECTED: {:userGestureComplete true, :audioLoaded true, :audioDataReady true, ...}
+;; EXPECTED: {:userGestureComplete true, :audioLoaded true, :audioDataReady true, :lastError nil, ...}
 ```
 
 **� SESSION READY**: Audio service is now fully initialized with user gesture complete. All subsequent tests can run without human interaction.
