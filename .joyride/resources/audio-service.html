@@ -195,6 +195,7 @@
         function stopAudio() {
             audio.pause();
             audio.currentTime = 0;
+            // Explicitly set stopped state (don't rely on pause event)
             audioStatus.playbackState = 'stopped';
             log('Audio stopped');
             updateStatus('Stopped');
@@ -212,7 +213,7 @@
         function updatePlayPauseButton() {
             const button = document.getElementById('play-pause-button');
             if (!button) return;
-            
+
             switch(audioStatus.playbackState) {
                 case 'playing':
                     button.textContent = 'Pause';
@@ -242,7 +243,7 @@
                     button.style.background = '#4CAF50';
                     break;
             }
-            
+
             // Enable button if audio is loaded and user gesture complete
             button.disabled = !(audioStatus.audioLoaded && audioStatus.userGestureComplete);
         }
@@ -314,9 +315,12 @@
 
         audio.addEventListener('pause', () => {
             log('Audio: pause');
-            audioStatus.playbackState = 'paused';
-            updateStatus('Paused');
-            updatePlayPauseButton();
+            // Only set to 'paused' if we're not already in a terminal state
+            if (audioStatus.playbackState !== 'stopped' && audioStatus.playbackState !== 'error') {
+                audioStatus.playbackState = 'paused';
+                updateStatus('Paused');
+                updatePlayPauseButton();
+            }
         });
 
         audio.addEventListener('ended', () => {
