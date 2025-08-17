@@ -292,8 +292,10 @@ These tests verify functionality that currently works correctly and should conti
 - ❌ State inconsistency (resolver disappears without proper cleanup)
 - ❌ Memory leaks from unresolved promises#### Test 2: Audio Playing Status Accuracy
 
-**Status**: 🔴 CURRENTLY FAILS - Reports "playing" immediately, not when actually playing
+**Status**: ✅ SHOULD PASS - Fix 2 implemented: Webview no longer sets "playing" before audio.play() succeeds
 **Dependencies**: Relies on session initialization (user gesture complete)
+
+**🔧 IMPLEMENTATION NOTE**: Fixed premature status setting in webview. However, full test still affected by Fix 3 race condition in `play-audio!+` function.
 
 **Test Session**:
 ```clojure

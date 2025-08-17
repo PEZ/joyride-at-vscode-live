@@ -160,9 +160,9 @@
             }
 
             log('  Prerequisites met - calling audio.play()');
-            audioStatus.playbackState = 'playing';
             audio.play().then(() => {
                 log('Audio play() succeeded');
+                audioStatus.playbackState = 'playing';
                 updateStatus('Playing', 'success');
             }).catch(err => {
                 const msg = 'Audio play() failed: ' + err.message;

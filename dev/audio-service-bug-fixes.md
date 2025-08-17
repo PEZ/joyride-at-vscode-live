@@ -6,7 +6,7 @@
 
 - [x] **Fix 0: CRITICAL - User Gesture Playback Failure** - Status: ✅ COMPLETED 2025-08-17
 - [x] **Fix 1: Prevent Concurrent Audio Loads** - Status: ✅ COMPLETED 2025-08-18
-- [ ] **Fix 2: Fix Premature "Playing" Status in Webview** - Status: Not Started
+- [x] **Fix 2: Fix Premature "Playing" Status in Webview** - Status: ✅ COMPLETED 2025-08-18
 - [ ] **Fix 3: Remove Race Condition in play-audio!+** - Status: Not Started
 - [ ] **Fix 4: Improve Resolver ID Validation** - Status: Not Started
 - [ ] **Fix 5: Add Missing Audio Event Handlers in Webview** - Status: Not Started
@@ -97,67 +97,13 @@ The file `dev/testing-audio-service.md` will contain:
 
 ---
 
-## Fix 2: Fix Premature "Playing" Status in Webview
-**File**: `audio-service.html`
-**Function**: `playAudio()`
-**Priority**: Critical (main bug causing false status reports)
+## Fix 2: Fix Premature "Playing" Status in Webview ✅ COMPLETED
 
-### Step 1: Expose the Problem with REPL Test
-**Run the test from `dev/testing-audio-service.md` Test 2 to see the bug:**
+**Bug**: Webview set `playbackState = 'playing'` before `audio.play()` was called, causing immediate false "playing" status reports.
 
-```clojure
-;; This demonstrates the premature "playing" status bug
-(def play-result (audio/play-audio!+))
-(get-in play-result [:status-after :playbackState])
-;; BUG: Shows "playing" immediately, before audio actually starts
+**Fix**: Moved status update inside `audio.play().then()` success handler so status only shows "playing" after audio actually starts.
 
-;; Check real status after delay
-(js/Promise.
- (fn [resolve reject]
-   (js/setTimeout
-     #(-> (audio/get-audio-status!+)
-          (.then resolve))
-     2000)))
-;; May show "stopped" indicating audio finished, proving it wasn't "playing" when reported
-```
-
-### Step 2: Update Regression Test
-Ensure `dev/testing-audio-service.md` Test 2 documents this exact behavior.
-
-### Step 3: Issue Analysis
-`audioStatus.playbackState = 'playing'` is set before `audio.play()` actually starts.
-
-### Step 4: Solution Implementation
-Move status update inside the promise success handler.
-
-```javascript
-// BEFORE:
-audioStatus.playbackState = 'playing';
-audio.play().then(() => {
-    log('Audio play() succeeded');
-    updateStatus('Playing', 'success');
-}).catch(err => {
-
-// AFTER:
-audio.play().then(() => {
-    log('Audio play() succeeded');
-    audioStatus.playbackState = 'playing';
-    updateStatus('Playing', 'success');
-}).catch(err => {
-```
-
-### Files to Edit
-- `/Users/pez/Projects/Meetup/joyride-at-vscode-live/.joyride/resources/audio-service.html` (lines ~125-140)
-
-### Testing After Fix 2
-```clojure
-;; Status should NOT immediately show "playing"
-(audio/play-audio!+)
-;; Check status immediately - should show transitional state, not "playing"
-(audio/get-audio-status!+)
-```
-
-**🛑 STOP: Have human verify Fix 2 works before proceeding to Fix 3**
+**Result**: Status reports are now accurate - "playing" only appears when audio is genuinely playing.
 
 ---
 
