@@ -292,14 +292,14 @@
          :success true}))))
 
 (comment
-  (p/let [load+ (load-audio!+ "slides/voice/demo-tts.mp3")]
+  (p/let [load+ (load-audio!+ "dev/test-resources/audio-play-test-very-short.mp3")]
     (def load+ load+))
 
 
   (p/let [play+ (play-audio!+)]
     (def play+ play+))
 
-  (p/let [load-and-play+ (load-and-play-audio!+ "slides/voice/demo-tts.mp3")]
+  (p/let [load-and-play+ (load-and-play-audio!+ "dev/test-resources/audio-play-test-two-sentences.mp3")]
     (def load-and-play+ load-and-play+))
 
   (p/let [pause+ (pause-audio!+)]
