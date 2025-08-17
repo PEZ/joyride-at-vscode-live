@@ -1,0 +1,449 @@
+/* Import FontAwesome */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
+
+/* Base Styles */
+body {
+  margin: 0;
+  padding: 0;
+  /* padding-top: 20px; */
+  line-height: 1.5;
+}
+
+/* Slide Container */
+.slide {
+  overflow: hidden;
+  max-width: 100%;
+  padding: 20px;
+  position: relative;
+  box-sizing: border-box;
+  container-type: inline-size;
+}
+
+/* When body contains slides, prevent scrolling */
+body:has(.slide) {
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* Alternative: Use explicit slide-mode class on body */
+body.slide-mode {
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* Typography */
+.github-markdown-body h1 {
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.github-markdown-body h2 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  border: none;
+}
+
+.small {
+  font-size: 0.7em;
+  opacity: 0.9;
+}
+
+/* Column Layout System */
+.row {
+  display: flex;
+  /* flex-wrap: wrap; */
+  /* margin: 0 -10px; */
+  width: 100%;
+}
+
+.column {
+  /* padding: 0 10px; */
+  /* flex: 1;
+  min-width: 200px; */
+}
+
+/* Grid Column Widths */
+.col-1 { flex: 0 0 8.333%; }
+.col-2 { flex: 0 0 16.666%; }
+.col-3 { flex: 0 0 25%; }
+.col-4 { flex: 0 0 33.333%; }
+.col-5 { flex: 0 0 41.666%; }
+.col-6 { flex: 0 0 50%; }
+.col-7 { flex: 0 0 58.333%; }
+.col-8 { flex: 0 0 66.666%; }
+.col-9 { flex: 0 0 75%; }
+.col-10 { flex: 0 0 83.333%; }
+.col-11 { flex: 0 0 91.666%; }
+.col-12 { flex: 0 0 100%; }
+
+/* Responsive Containers - using container queries */
+@container (max-width: 600px) {
+  .row {
+    flex-direction: column;
+  }
+
+  .column {
+    flex: 0 0 100% !important;
+    margin-bottom: 20px;
+  }
+}
+
+.responsive-container {
+  container-type: inline-size;
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+/* Utility Classes */
+.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  flex-direction: column;
+}
+
+.vcenter {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.scroller {
+  max-height: 80svh;
+  overflow-y: auto;
+  /* border: 1px solid var(--vscode-editor-lineHighlightBorder); */
+  /* padding: 10px; */
+  /* position: relative; */
+}
+
+.scroller::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 100%;
+  height: 20px;
+  background: linear-gradient(to bottom, transparent, var(--vscode-editor-background));
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.gutters-10 {
+  padding: 10px;
+}
+
+/* Image Handling */
+img {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+img:hover {
+  transform: scale(1.02);
+  transition: transform 0.3s ease;
+}
+
+/* Icon Gallery */
+.icon-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+
+.icon-gallery img {
+  height: 160px;
+  width: auto;
+}
+
+/* Title slide logo row - scales logos to fill width */
+.title-logo-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin: 2rem 0;
+  /* padding: 0 5vw; */
+}
+
+.title-logo-row img {
+  flex: 1;
+  max-width: 100%;
+  max-height: 12vw;
+  object-fit: contain;
+}
+
+.title-logo-row .logo-separator {
+  font-size: 4vw;
+  opacity: 0.7;
+  margin: 0 4vw;
+  flex-shrink: 0;
+}
+
+/* Slide Types */
+/* Title Slide */
+.title-slide h1 {
+  font-size: 6vw;
+  overflow: hidden;
+  /* white-space: nowrap; */
+}
+
+.title-slide .subtitle {
+  font-size: 1.5em;
+  opacity: 0.8;
+  margin-bottom: 30px;
+}
+
+/* Image Slide */
+.image-slide .caption {
+  font-style: italic;
+  opacity: 0.8;
+  text-align: center;
+  margin-top: 10px;
+}
+
+/* Content Heavy Slide */
+.content-heavy {
+  display: flex;
+  flex-direction: column;
+}
+
+.content-heavy .content-area {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 70vh;
+  position: relative;
+}
+
+.content-heavy .content-area::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 100%;
+  height: 25px;
+  background: linear-gradient(to bottom, transparent, var(--vscode-editor-background));
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+/* Additional Layout Improvements */
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* Responsive Image Layout */
+.image-focus {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.image-focus img {
+  max-height: 60vh;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.image-focus img:hover {
+  transform: scale(1.03);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+}
+
+/* Gallery Layout */
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.gallery-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+  border-radius: 5px;
+  transition: background-color 0.2s ease;
+}
+
+.gallery-item:hover {
+  background-color: var(--vscode-editor-hoverHighlightBackground);
+}
+
+.gallery-item img {
+  max-width: 100%;
+  height: 120px;
+  object-fit: contain;
+}
+
+.gallery-item .caption {
+  margin-top: 10px;
+  font-size: 0.9em;
+  text-align: center;
+}
+
+/* Social Media Icons using FontAwesome */
+.social-links {
+  list-style: none; /* Remove bullet points */
+  padding: 0;
+  margin: 0;
+}
+
+/* Icon Lists - Auto-detect and style lists with Font Awesome icons */
+ul li:has(> i.fas),
+ul li:has(> i.fab),
+ul li:has(> i.far),
+ul li:has(> i.fa) {
+  list-style: none;
+  margin-left: -1.5rem;
+  padding-left: 0;
+}
+
+/* Nested lists under icon lists */
+ul li:has(> i.fas) li,
+ul li:has(> i.fab) li,
+ul li:has(> i.far) li,
+ul li:has(> i.fa) li {
+  list-style: none;
+  margin-left: 0rem;
+  padding-left: 0;
+}
+
+/* Icon alignment for auto-detected icon lists */
+ul li > i.fas,
+ul li > i.fab,
+ul li > i.far,
+ul li > i.fa {
+  color: #007acc;
+  display: inline-block;
+  width: 1.2rem;
+  text-align: center;
+  margin-right: 0.2rem;
+}
+
+/* Keep existing no-bullets class for backward compatibility */
+.no-bullets li {
+  list-style: none;
+  margin-left: -1.5rem;
+  padding-left: 0;
+}
+
+.no-bullets li li {
+  list-style: none;
+  margin-left: -0.2rem;
+  padding-left: 0;
+}
+
+/* Icon alignment for lists with icons */
+.no-bullets li i.fas,
+.no-bullets li i.fab {
+  display: inline-block;
+  width: 25px;
+  text-align: center;
+  margin-right: 0.2rem;
+}
+
+.social-links li {
+  list-style: none; /* Remove bullet points from list items */
+}
+
+.social-links a::before {
+  font-family: "Font Awesome 6 Brands", "Font Awesome 6 Free";
+  font-weight: 900;
+  margin-right: 8px;
+  font-size: 1.1em;
+  color: var(--vscode-foreground); /* Use default text color for icons */
+  display: inline-block;
+  width: 1.2em; /* Fixed width for consistent alignment */
+  text-align: center; /* Center the icon within its fixed width */
+}
+
+.social-links a {
+  color: var(--vscode-textLink-foreground); /* Link color for text only */
+  text-decoration: none; /* Remove underline by default */
+  display: flex; /* Use flexbox for better alignment */
+  align-items: center; /* Vertically center text with icons */
+  margin-bottom: 0.5em; /* Add some spacing between links */
+}
+
+.social-links a:hover {
+  text-decoration: none; /* Keep no underline on hover */
+}
+
+/* GitHub */
+.social-links a[href*="github.com"]::before {
+  content: "\f09b"; /* fab fa-github */
+}
+
+/* Twitter/X */
+.social-links a[href*="x.com"]::before,
+.social-links a[href*="twitter.com"]::before {
+  content: "\f099"; /* fab fa-twitter */
+}
+
+/* LinkedIn */
+.social-links a[href*="linkedin.com"]::before {
+  content: "\f08c"; /* fab fa-linkedin */
+}
+
+/* YouTube */
+.social-links a[href*="youtube.com"]::before,
+.social-links a[href*="youtu.be"]::before {
+  content: "\f167"; /* fab fa-youtube */
+}
+
+/* Blog/Website */
+.social-links a[href*="blog."]::before,
+.social-links a[href*="medium.com"]::before {
+  content: "\f09e"; /* fas fa-rss */
+}
+
+/* Generic social fallback */
+.social-links a:not([href*="github.com"]):not([href*="x.com"]):not([href*="twitter.com"]):not([href*="linkedin.com"]):not([href*="youtube.com"]):not([href*="youtu.be"]):not([href*="blog."])::before {
+  content: "\f0c1"; /* fas fa-link */
+}
+
+/* Alternative approach using CSS icons for better control */
+.social-icon {
+  display: inline-block;
+  width: 1.2em;
+  height: 1.2em;
+  margin-right: 0.5em;
+  vertical-align: middle;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.social-icon.github {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='currentColor' d='M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z'/%3E%3C/svg%3E");
+}
+
+/* Accessibility Improvements */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Print Styles - for exporting to PDF */
+@media print {
+  .slide {
+    page-break-after: always;
+    height: 100vh;
+    overflow: visible;
+  }
+
+  .scroller, .content-area {
+    overflow: visible;
+    max-height: none;
+  }
+}
