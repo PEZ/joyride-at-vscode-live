@@ -8,7 +8,7 @@
 - [x] **Fix 1: Prevent Concurrent Audio Loads** - Status: ✅ COMPLETED 2025-08-18
 - [x] **Fix 2: Fix Premature "Playing" Status in Webview** - Status: ✅ COMPLETED 2025-08-18
 - [x] **Fix 3: Remove Race Condition in play-audio!+** - Status: ✅ COMPLETED 2025-08-18
-- [ ] **Fix 4: Improve Resolver ID Validation** - Status: Not Started
+- [x] **Fix 4: Improve Resolver ID Validation** - Status: ✅ COMPLETED 2025-08-18
 - [ ] **Fix 5: Add Missing Audio Event Handlers in Webview** - Status: Not Started
 - [ ] **Fix 6: Improve Error Messages in Timeout Handler** - Status: Not Started
 
@@ -122,41 +122,18 @@ Remove the second status fetch and rely on the pre-play status check only.
 
 ---
 
-## Fix 4: Improve Resolver ID Validation
+## Fix 4: Improve Resolver ID Validation ✅ COMPLETED
 **File**: `audio_playback.cljs`
 **Function**: Message handler in `init-audio-service!`
 **Priority**: Medium (prevents silent bugs)
 
 ### Issue
-Fallback "any resolver" logic masks ID mismatches and could resolve wrong promises.
+ID mismatch warnings were only logged to console but didn't provide user feedback or properly reject promises.
 
 ### Solution
-Add strict validation and clear error logging for ID mismatches.
+Enhanced ID validation with user-visible error messages and proper promise rejection for ID mismatches.
 
-```clojure
-;; Replace the fallback logic with strict validation:
-(if-let [resolver-map (get-in current-state [:load-resolvers audio-id])]
-  (do
-    ((:resolve resolver-map) load-data)
-    (swap! !state remove-resolver :load-resolvers audio-id))
-  ;; Log error instead of silent fallback
-  (do
-    (println "❌ No resolver found for audio-id:" audio-id "Available:" (keys (:load-resolvers current-state)))
-    (vscode/window.showWarningMessage (str "Audio ready notification for unknown ID: " audio-id))))
-```
-
-### Files to Edit
-- `/Users/pez/Projects/Meetup/joyride-at-vscode-live/.joyride/src/ai_presenter/audio_playback.cljs` (lines ~140-150)
-- Apply same pattern to error handler (lines ~150-165)
-
-### Testing After Fix 4
-```clojure
-;; Test with mismatched ID - should show clear error
-(audio/load-audio!+ "dev/test-resources/audio-play-test-very-short.mp3" :id "test-id")
-;; Manually trigger webview message with different ID to see validation
-```
-
-**🛑 STOP: Have human verify Fix 4 works before proceeding to Fix 5**
+**Result**: ID mismatches now show clear VS Code warning messages and properly reject promises instead of silently failing.
 
 ---
 

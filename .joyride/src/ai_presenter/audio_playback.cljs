@@ -149,8 +149,15 @@
              (do
                ((:resolve resolver-map) load-data)
                (swap! !state clear-current-load-resolver))
-             (println "⚠️ Audio ready for ID" audio-id "but current resolver is for" (:id resolver-map)))
-           (println "⚠️ Audio ready notification but no current load resolver"))))
+             (let [error-msg (str "Audio ready ID mismatch: expected '" (:id resolver-map) "' but got '" audio-id "'")]
+               (println "❌" error-msg)
+               (vscode/window.showWarningMessage error-msg)
+               ;; Reject the current resolver with clear error
+               ((:reject resolver-map) (js/Error. error-msg))
+               (swap! !state clear-current-load-resolver)))
+           (let [error-msg (str "Audio ready notification for ID '" audio-id "' but no current load resolver")]
+             (println "❌" error-msg)
+             (vscode/window.showWarningMessage error-msg)))))
      ;; Handle audio load error notifications
      (when (= (.-type message) "audioLoadError")
        (println "❌ Audio load error notification received!")
@@ -163,8 +170,15 @@
              (do
                ((:reject resolver-map) (js/Error. (:error error-data)))
                (swap! !state clear-current-load-resolver))
-             (println "⚠️ Audio error for ID" audio-id "but current resolver is for" (:id resolver-map)))
-           (println "⚠️ Audio error notification but no current load resolver"))))
+             (let [error-msg (str "Audio error ID mismatch: expected '" (:id resolver-map) "' but got '" audio-id "'")]
+               (println "❌" error-msg)
+               (vscode/window.showWarningMessage error-msg)
+               ;; Still reject the current resolver since something went wrong
+               ((:reject resolver-map) (js/Error. (str error-msg ". Original error: " (:error error-data))))
+               (swap! !state clear-current-load-resolver)))
+           (let [error-msg (str "Audio error notification for ID '" audio-id "' but no current load resolver")]
+             (println "❌" error-msg)
+             (vscode/window.showWarningMessage error-msg)))))
      message))
   (:webview @!state))
 
