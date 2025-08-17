@@ -17,15 +17,20 @@
 
     <div class='status' id='status'>Ready to test audio playback</div>
 
-    <div>
-        <p>You must manually click the Enable Audio button, because browser security.</p>
+    <div id='enable-audio-section'>
+        <p id='enable-audio-message'>You must manually click the Enable Audio button, because browser security.</p>
+        <div class='controls'>
+            <button id='enable-audio-button' onclick='enableAudio()' style='background: #0078d4; color: white; border: none; padding: 15px 25px; font-size: 16px;'>
+                🔊 Enable Audio
+            </button>
+        </div>
+    </div>
+
+    <div id='audio-enabled-section' style='display: none;'>
+        <p style='color: #4CAF50; font-weight: bold;'>✅ Audio enabled and ready for playback!</p>
     </div>
 
     <div class='controls'>
-        <button onclick='enableAudio()' style='background: #0078d4; color: white; border: none; padding: 15px 25px; font-size: 16px;'>
-            🔊 Enable Audio
-        </button>
-        <br><br>
         <button onclick='playAudio()'>Play</button>
         <button onclick='pauseAudio()'>Pause</button>
         <button onclick='stopAudio()'>Stop</button>
@@ -92,6 +97,10 @@
             log('User clicked enable audio button - gesture captured');
             userGestureComplete = true;
             audioStatus.userGestureComplete = true;
+
+            // Update UI to show audio is enabled
+            document.getElementById('enable-audio-section').style.display = 'none';
+            document.getElementById('audio-enabled-section').style.display = 'block';
 
             // CRITICAL FIX: Unlock audio element for future programmatic playback
             // We must interact with audio element during user gesture to satisfy browser security
@@ -248,16 +257,19 @@
         audio.addEventListener('playing', () => {
             log('Audio: playing');
             audioStatus.playbackState = 'playing';
+            updateStatus('Playing', 'success');
         });
 
         audio.addEventListener('pause', () => {
             log('Audio: pause');
             audioStatus.playbackState = 'paused';
+            updateStatus('Paused');
         });
 
         audio.addEventListener('ended', () => {
             log('Audio: ended');
             audioStatus.playbackState = 'stopped';
+            updateStatus('Stopped');
         });
 
         audio.addEventListener('error', (e) => {
