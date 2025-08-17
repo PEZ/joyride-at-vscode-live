@@ -371,7 +371,7 @@ These tests verify functionality that currently works correctly and should conti
 
 #### Test 4: Resolver ID Validation
 
-**Status**: 🔴 CURRENTLY FAILS - Silent fallback masks ID mismatches
+**Status**: ✅ SHOULD PASS - Fix 4 implemented: Enhanced ID validation with user-visible errors
 **Dependencies**: Uses current session state (no reset needed)
 
 **Test Session**:
@@ -391,9 +391,6 @@ These tests verify functionality that currently works correctly and should conti
  :updated-resolver updated-resolver
  :has-test-123 (= (:id updated-resolver) "test-123")}
 
-;; BUG: The issue would be in webview message handling where wrong resolvers get used
-;; This is more about message routing than state management
-;; The silent fallback happens when webview sends back results with wrong/missing IDs
 ```
 
 **Expected Behavior (after fix)**:
@@ -401,10 +398,9 @@ These tests verify functionality that currently works correctly and should conti
 - ✅ Clear error logging when ID mismatch occurs
 - ✅ No silent fallback to "any resolver"
 
-**Current Behavior (bug)**:
-- ❌ Falls back to any available resolver when ID doesn't match
-- ❌ Silent masking of ID mismatches
-- ❌ Could resolve wrong promises#### Test 5: Missing Audio Event Handling
+---
+
+#### Test 5: Missing Audio Event Handling
 
 **Status**: 🔴 CURRENTLY FAILS - Missing handlers for some audio events
 **Dependencies**: Relies on session initialization
