@@ -246,7 +246,8 @@
                                (str ". Error: " (:lastError final-status))))))))
           timeout-ms))))
     (catch :default e
-      (vscode/window.showErrorMessage (.-message e)))))
+      (vscode/window.showErrorMessage (.-message e))
+      (p/reject! e))))
 
 (defn check-user-gesture!+
   "Check if user gesture has been completed"
