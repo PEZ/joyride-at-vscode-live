@@ -171,7 +171,29 @@
 
     [Pause]
 
-    It should play a bit longer that the very-short test.")
+    It should play a bit longer than the very-short test.")
+
+  (generate-slide-audio!+ "audio-play-test-ten-sentences" "Hello, this is a longer test of the audio generation system.
+
+    [Pause]
+
+    It should play for about thirty seconds, with multiple sentences to give time to experiment with play/pause and statuses and what not.
+
+    [Pause]
+
+    I may slip into Rich Hickey worship, by the way.
+                                                           [Pause]
+                                                           I hope you don't mind.
+                                                           [Pause]
+                                                           I really like his work.
+                                                           [Pause]
+                                                           I think he's a genius.
+                                                           [Pause]
+                                                           It would be great if more people discover his thinking.
+                                                           [Pause]
+                                                           I think Clojure is a great language.
+                                                           [Pause]
+                                                           It makes programming fun.")
 
   ;; Play generated audio (relative path)
   (ai-presenter.audio-playback/load-and-play-audio!+ "slides/voice/demo-tts.mp3")
