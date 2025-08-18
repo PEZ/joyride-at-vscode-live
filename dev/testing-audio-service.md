@@ -520,12 +520,15 @@ These tests verify functionality that currently works correctly and should conti
 ;; - Timing: Should match audio duration (~6.984 seconds + small overhead)
 
 ;; Test with different audio file to verify robustness
-(audio/load-audio!+ "dev/test-resources/audio-play-test-very-short.mp3")
+;; Wait for load to complete before testing play-and-wait
+(p/let [load-result (audio/load-audio!+ "dev/test-resources/audio-play-test-very-short.mp3")]
+  (println "✅ Short audio loaded")
 
-(p/let [result (audio/play-and-wait-audio!+)]
-  (println "🎯 Short audio result:" result)
-  {:short-audio-completed (:completed result)
-   :short-audio-reason (:reason result)})
+  (p/let [result (audio/play-and-wait-audio!+)]
+    (println "🎯 Short audio result:" result)
+    {:short-audio-completed (:completed result)
+     :short-audio-reason (:reason result)
+     :short-audio-duration (get-in result [:event-data :duration])}))
 ;; EXPECTED: Completion with shorter duration for very short audio file
 ```
 
