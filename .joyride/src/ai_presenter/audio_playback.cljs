@@ -17,6 +17,7 @@
 (defonce !state (atom {:webview nil
                        :status-resolvers {}
                        :completion-resolvers {}
+                       :log-resolvers {}
                        :current-load-resolver nil  ; Single resolver for the one allowed load operation
                        :last-known-status nil}))
 
@@ -219,6 +220,14 @@
      (when (= (.-type message) "audioCompletion")
        (println "🎵 Audio completion event received:" (.-event message))
        (handle-audio-completion-event! message))
+     ;; Handle log responses
+     (when (= (.-type message) "logResponse")
+       (let [log-data (js->clj message :keywordize-keys true)
+             current-state @!state]
+         ;; Resolve pending log request
+         (when-let [resolver (get-in current-state [:log-resolvers "current"])]
+           (resolver log-data)
+           (swap! !state remove-resolver :log-resolvers "current"))))
      message))
   (:webview @!state))
 
@@ -239,6 +248,20 @@
      (js/setTimeout #(do
                        (swap! !state remove-resolver :status-resolvers "current")
                        (reject "Status request timeout")) 5000))))
+
+(defn get-webview-logs!+
+  "Request and return the webview log content"
+  []
+  (p/create
+   (fn [resolve reject]
+     ;; Store the resolver using pure function
+     (swap! !state assoc-in [:log-resolvers "current"] resolve)
+     ;; Request logs from webview
+     (send-audio-command! :getLogs)
+     ;; Timeout after 5 seconds
+     (js/setTimeout #(do
+                       (swap! !state remove-resolver :log-resolvers "current")
+                       (reject "Log request timeout")) 5000))))
 
 (defn check-user-gesture!+
   "Check if user gesture has been completed"

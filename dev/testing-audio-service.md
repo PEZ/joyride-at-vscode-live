@@ -238,7 +238,7 @@ These tests verify functionality that currently works correctly and should conti
 ;; Test 1: Manual Play/Pause Button Testing (Human interaction required)
 (defn test-play-pause-button-status-management []
   (println "🎯 Testing Play/Pause Button Status Management")
-  
+
   ;; Load longer audio for manual testing
   (-> (audio/load-audio!+ "dev/test-resources/audio-play-test-two-sentences.mp3")
       (.then #(do
@@ -293,11 +293,55 @@ These tests verify functionality that currently works correctly and should conti
 - ✅ Multiple play cycles sequence properly without conflicts
 - ✅ Button state accurately reflects actual audio element state
 
-**Previous Behavior (before fix)**:
-- ❌ Button flickered between Play/Pause states
-- ❌ Race conditions between command functions and audio events
-- ❌ Button state could be inconsistent with actual audio state
-- ❌ Premature state setting in command functions
+#### Test F: Webview Log Retrieval (Debugging Support)
+
+**Status**: ✅ SHOULD PASS - Webview log retrieval functionality (Added 2025-08-18)
+**Dependencies**: Uses current session state
+**Purpose**: Retrieve webview logs for debugging and verification of audio service behavior
+
+**Test Session**:
+```clojure
+;; NOTE: Can use existing session state - no reset needed
+
+;; Test 1: Raw log retrieval
+(audio/get-webview-logs!+)
+;; EXPECTED: Returns log data with :logContent and :timestamp
+
+;; Test 2: Formatted log display (recommended for debugging)
+(defn print-webview-logs!+ []
+  "Retrieve and print webview logs in a readable format"
+  (-> (audio/get-webview-logs!+)
+      (.then #(do
+                (println "\n🔍 WEBVIEW LOGS:")
+                (println "================")
+                (let [log-content (:logContent %)
+                      cleaned-logs (-> log-content
+                                      (clojure.string/replace #"<br>" "\n")
+                                      (clojure.string/replace #"&nbsp;" " "))]
+                  (println cleaned-logs))
+                (println "================")
+                (println "Log retrieved at:" (:timestamp %))))))
+
+(print-webview-logs!+)
+
+;; Test 3: Generate some activity then check logs
+(audio/play-audio!+)
+;; Wait a moment for activity to log
+(js/setTimeout #(print-webview-logs!+) 1000)
+```
+
+**Expected Behavior**:
+- ✅ `get-webview-logs!+` returns promise with log data structure
+- ✅ Log content includes timestamps, user interactions, audio events
+- ✅ `print-webview-logs!+` displays formatted, readable log output
+- ✅ Logs show state validations, command processing, event handling
+- ✅ Useful for debugging audio service behavior and troubleshooting
+
+**Use Cases**:
+- 🔧 **Debugging**: Inspect detailed webview activity during tests
+- 🔍 **Verification**: Confirm expected events and state changes occurred  
+- 📊 **Analysis**: Review timing and sequence of audio operations
+- 🐛 **Troubleshooting**: Identify issues in webview-Clojure communication
 
 ---
 

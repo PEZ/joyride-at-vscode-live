@@ -244,7 +244,7 @@
 
             // FIX: Add state validation against actual audio element
             let effectiveState = audioStatus.playbackState;
-            
+
             // Validate state against audio element as fallback
             if (audio && !audio.paused && effectiveState !== 'playing') {
                 log('State validation: audio playing but state is ' + effectiveState + ', correcting to playing');
@@ -327,6 +327,22 @@
             });
 
             return audioStatus;
+        }
+
+        function getWebviewLogs() {
+            const logDiv = document.getElementById('log');
+            const logContent = logDiv ? logDiv.innerHTML : 'No log content available';
+
+            log('LOG REQUEST - Sending webview log content');
+
+            // Send log content back to Joyride
+            vscode.postMessage({
+                type: 'logResponse',
+                logContent: logContent,
+                timestamp: new Date().toISOString()
+            });
+
+            return logContent;
         }
 
         // Audio event listeners with enhanced status tracking
@@ -470,6 +486,9 @@
                     break;
                 case 'status':
                     getAudioStatus();
+                    break;
+                case 'getLogs':
+                    getWebviewLogs();
                     break;
                 default:
                     log('Unknown message command: ' + message.command);
