@@ -16,6 +16,7 @@
 
 (defonce !state (atom {:webview nil
                        :status-resolvers {}
+                       :completion-resolvers {}
                        :current-load-resolver nil  ; Single resolver for the one allowed load operation
                        :last-known-status nil}))
 
@@ -66,6 +67,16 @@
   [state]
   (assoc state :current-load-resolver nil))
 
+(defn add-completion-resolver
+  "Pure function: Add a completion resolver to state"
+  [state id resolver]
+  (assoc-in state [:completion-resolvers id] resolver))
+
+(defn remove-completion-resolver
+  "Pure function: Remove a completion resolver from state"
+  [state id]
+  (update state :completion-resolvers dissoc id))
+
 (defn update-last-status
   "Pure function: Update the cached status"
   [state new-status]
@@ -93,6 +104,36 @@
 ;; =============================================================================
 ;; IMPERATIVE SHELL - Side Effects
 ;; =============================================================================
+
+(defn handle-audio-completion-event!
+  "Handle audio completion events from webview"
+  [message]
+  (let [event-data (js->clj message :keywordize-keys true)
+        audio-id (or (:id event-data) "default")
+        event-type-str (:event event-data)  ; JavaScript sends strings
+        event-type (keyword event-type-str)  ; Convert to keyword for case
+        current-time (:currentTime event-data)
+        current-state @!state]
+
+    ;; Find and resolve any completion resolvers for this audio ID
+    (doseq [[completion-id resolver-data] (:completion-resolvers current-state)]
+      (when (= (:id resolver-data) audio-id)
+        (let [{:keys [resolve reject]} resolver-data]
+          (case event-type
+            :ended (do
+                     (resolve {:completed true :reason :ended :event-data event-data})
+                     (swap! !state remove-completion-resolver completion-id))
+            :paused (if (= current-time 0)
+                      ;; Ignore paused events at currentTime 0 - they're part of the end sequence
+                      (println "🔇 Ignoring paused event at currentTime 0 (end sequence)")
+                      ;; Real user pause - resolve with paused status
+                      (do
+                        (resolve {:completed false :reason :paused :event-data event-data})
+                        (swap! !state remove-completion-resolver completion-id)))
+            :error (do
+                     (reject (js/Error. (str "Audio error: " (:error event-data))))
+                     (swap! !state remove-completion-resolver completion-id))
+            (println "⚠️ Unknown audio completion event:" event-type)))))))
 
 (defn dispose-audio-webview! []
   (when-let [webview (:webview @!state)]
@@ -127,6 +168,7 @@
    (.-webview (:webview @!state))
    (fn [message]
      (println "audio-service-webview message:" message)
+     (println "🔍 DEBUG: Message type is:" (.-type message))
      ;; Handle status responses
      (when (= (.-type message) "statusResponse")
        (let [status (js->clj (.-status message) :keywordize-keys true)
@@ -179,6 +221,10 @@
            (let [error-msg (str "Audio error notification for ID '" audio-id "' but no current load resolver")]
              (println "❌" error-msg)
              (vscode/window.showWarningMessage error-msg)))))
+     ;; Handle audio completion events (NEW!)
+     (when (= (.-type message) "audioCompletion")
+       (println "🎵 Audio completion event received:" (.-event message))
+       (handle-audio-completion-event! message))
      message))
   (:webview @!state))
 
@@ -284,6 +330,27 @@
     (catch :default e
       (vscode/window.showErrorMessage (.-message e))
       (p/reject! e))))
+
+(defn play-and-wait-audio!+
+  "Play audio and wait for completion using events instead of polling.
+   Returns a promise that resolves when audio finishes or user stops it."
+  [& {:keys [id]}]
+  (let [audio-id (or id "default")
+        completion-id (str "completion-" audio-id "-" (js/Date.now))]
+    (p/create
+     (fn [resolve reject]
+       ;; Store the completion resolver
+       (swap! !state add-completion-resolver completion-id {:resolve resolve :reject reject :id audio-id})
+
+       ;; First, try to play the audio
+       (p/let [play-result (play-audio!+ :id audio-id)]
+         (if (:success play-result)
+           ;; Play succeeded - now we just wait for events (no polling!)
+           (println "🎵 Audio started, waiting for completion events...")
+           ;; Play failed immediately
+           (do
+             (swap! !state remove-completion-resolver completion-id)
+             (reject (js/Error. (str "Failed to start playback: " play-result))))))))))
 
 (defn load-and-play-audio!+
   "Load and play audio with proper user gesture checking"

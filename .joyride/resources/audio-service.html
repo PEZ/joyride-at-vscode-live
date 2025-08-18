@@ -3,42 +3,66 @@
 <head>
     <title>Audio Control with Local Resources</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; background: #1e1e1e; color: #d4d4d4; }
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            height: 100svh;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            box-sizing: border-box;
+        }
+        .content {
+            flex-shrink: 0;
+        }
         .controls { margin: 20px 0; }
         button { margin: 5px; padding: 10px 15px; font-size: 14px; }
         .status { padding: 10px; background: #2d2d30; border-radius: 5px; margin: 10px 0; }
         .success { background: #0e7c0e; }
         .error { background: #a1260d; }
-        .log { background: #252526; padding: 10px; border-radius: 5px; max-height: 200px; overflow-y: auto; font-family: monospace; font-size: 12px; }
+        .log {
+            background: #252526;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            flex: 1;
+            min-height: 0;
+        }
     </style>
 </head>
 <body>
-    <h2>Audio Control with VS Code Local Resources</h2>
+    <div class="content">
+        <h2>Audio Control with VS Code Local Resources</h2>
 
-    <div class='status' id='status'>Ready to test audio playback</div>
+        <div class='status' id='status'>Ready to test audio playback</div>
 
-    <div id='enable-audio-section'>
-        <p id='enable-audio-message'>You must manually click the Enable Audio button, because browser security.</p>
-        <div class='controls'>
-            <button id='enable-audio-button' onclick='enableAudio()' style='background: #0078d4; color: white; border: none; padding: 15px 25px; font-size: 16px;'>
-                Enable Audio
-            </button>
+        <div id='enable-audio-section'>
+            <p id='enable-audio-message'>You must manually click the Enable Audio button, because browser security.</p>
+            <div class='controls'>
+                <button id='enable-audio-button' onclick='enableAudio()' style='background: #0078d4; color: white; border: none; padding: 15px 25px; font-size: 16px;'>
+                    Enable Audio
+                </button>
+            </div>
         </div>
-    </div>
 
-    <div id='audio-enabled-section' style='display: none;'>
-        <p style='color: #4CAF50; font-weight: bold;'>Audio enabled and ready for playback!</p>
-    </div>
+        <div id='audio-enabled-section' style='display: none;'>
+            <p style='color: #4CAF50; font-weight: bold;'>Audio enabled and ready for playback!</p>
+        </div>
 
-    <div class='controls'>
-        <button id='play-pause-button' onclick='togglePlayPause()' style='width: 100px;'>Play</button>
-        <button onclick='stopAudio()'>Stop</button>
-    </div>
+        <div class='controls'>
+            <button id='play-pause-button' onclick='togglePlayPause()' style='width: 100px;'>Play</button>
+            <button onclick='stopAudio()'>Stop</button>
+        </div>
 
-    <audio id='audioPlayer' preload='metadata' style='width: 100%; margin: 20px 0;'>
-        <source type='audio/mpeg'>
-        Your browser does not support the audio element.
-    </audio>
+        <audio id='audioPlayer' preload='metadata' style='width: 100%; margin: 20px 0;'>
+            <source type='audio/mpeg'>
+            Your browser does not support the audio element.
+        </audio>
+    </div>
 
     <div class='log' id='log'></div>
 
@@ -320,6 +344,15 @@
                 audioStatus.playbackState = 'paused';
                 updateStatus('Paused');
                 updatePlayPauseButton();
+
+                // Notify Joyride about audio pause (only if it was actually paused, not stopped)
+                vscode.postMessage({
+                    type: 'audioCompletion',
+                    event: 'paused',
+                    id: 'default',
+                    currentTime: audioStatus.audioCurrentTime,
+                    duration: audioStatus.audioDuration
+                });
             }
         });
 
@@ -328,6 +361,17 @@
             audioStatus.playbackState = 'stopped';
             updateStatus('Stopped');
             updatePlayPauseButton();
+
+            // Notify Joyride about audio completion
+            log('SENDING audioCompletion event: ended');
+            vscode.postMessage({
+                type: 'audioCompletion',
+                event: 'ended',
+                id: 'default',
+                currentTime: audioStatus.audioCurrentTime,
+                duration: audioStatus.audioDuration
+            });
+            log('audioCompletion event sent');
         });
 
         audio.addEventListener('error', (e) => {
@@ -344,6 +388,15 @@
             vscode.postMessage({
                 type: 'audioLoadError',
                 success: false,
+                error: msg,
+                audioSrc: audioStatus.audioSrc
+            });
+
+            // Also notify as completion event for play-and-wait functions
+            vscode.postMessage({
+                type: 'audioCompletion',
+                event: 'error',
+                id: 'default',
                 error: msg,
                 audioSrc: audioStatus.audioSrc
             });
