@@ -471,7 +471,74 @@ These tests verify functionality that currently works correctly and should conti
 **Current Behavior (bug)**:
 - ❌ Error messages don't clearly indicate timeout
 - ❌ Ambiguous between timeout and other failures
-- ❌ Missing timeout duration in error messages---
+- ❌ Missing timeout duration in error messages
+
+#### Test 7: Event-Driven Play-and-Wait Function
+
+**Status**: ✅ SHOULD PASS - “Fix” 7 implemented: Event-driven audio completion detection
+**Dependencies**: Relies on session initialization (user gesture complete)
+
+**🔧 IMPLEMENTATION NOTE**: Implemented event-driven `play-and-wait-audio!+` function that uses HTML5 audio events for completion detection instead of polling. Key improvements:
+
+1. **Event-Driven Architecture**: Uses native HTML5 audio `ended`, `paused`, and `error` events
+2. **Smart Event Filtering**: Distinguishes between spurious end-sequence pauses and real user pauses using `currentTime` data
+3. **Promise-Based API**: Returns promise that resolves when audio completes or user pauses
+4. **String-to-Keyword Conversion**: Handles JavaScript string event types properly in Clojure
+5. **No Polling**: Eliminates resource-intensive polling loops
+
+**Test Session**:
+```clojure
+;; NOTE: Assumes Session Initialization completed user gesture
+;; Load audio for testing
+(audio/load-audio!+ "dev/test-resources/audio-play-test-two-sentences.mp3")
+
+;; Test event-driven play-and-wait function
+(def test-start-time (js/Date.now))
+(println "🎵 Testing event-driven play-and-wait...")
+
+(p/let [result (audio/play-and-wait-audio!+)]
+  (let [test-end-time (js/Date.now)
+        total-duration (- test-end-time test-start-time)]
+    (println "✅ Play-and-wait completed!")
+    (println "🎯 Result:" result)
+    (println "⏱️ Duration:" total-duration "ms")
+    (println "🔍 Completed?:" (:completed result))
+    (println "🔍 Reason:" (:reason result))
+    (println "📊 Audio duration:" (get-in result [:event-data :duration]) "seconds")
+
+    {:test-success true
+     :completed (:completed result)
+     :reason (:reason result)
+     :duration-ms total-duration
+     :audio-duration-s (get-in result [:event-data :duration])
+     :timing-accurate (and (> total-duration 6000) (< total-duration 8000))}))
+
+;; EXPECTED RESULTS:
+;; - Natural completion: {:completed true :reason :ended :duration ~7000ms}
+;; - User pause: {:completed false :reason :paused :duration <7000ms}
+;; - Event sequence: paused(currentTime:0) → ignored, ended(currentTime:0) → resolved
+;; - Timing: Should match audio duration (~6.984 seconds + small overhead)
+
+;; Test with different audio file to verify robustness
+(audio/load-audio!+ "dev/test-resources/audio-play-test-very-short.mp3")
+
+(p/let [result (audio/play-and-wait-audio!+)]
+  (println "🎯 Short audio result:" result)
+  {:short-audio-completed (:completed result)
+   :short-audio-reason (:reason result)})
+;; EXPECTED: Completion with shorter duration for very short audio file
+```
+
+**Expected Behavior (after fix)**:
+- ✅ Promise resolves when audio naturally completes with `{:completed true :reason :ended}`
+- ✅ Promise resolves when user pauses with `{:completed false :reason :paused}`
+- ✅ Ignores spurious `paused` events at `currentTime: 0` (end-sequence artifacts)
+- ✅ Timing accurately reflects audio duration (~6.984s for two-sentences file)
+- ✅ No polling loops or resource waste
+- ✅ Works with different audio file lengths
+- ✅ Event data includes `currentTime`, `duration`, and event type information
+
+------
 
 ## 🔄 SESSION RESET & RE-ENABLEMENT TEST (Verify Clean Shutdown + Gesture Re-activation)
 
