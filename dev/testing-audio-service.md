@@ -1,6 +1,6 @@
-# Audio Service Regression Tests
+# Audio Service Test Suite
 
-This document contains REPL test sessions that expose bugs in the audio service. Each test should be run in the Joyride REPL to verify the audio service behaves correctly.
+This document contains comprehensive REPL test sessions for the audio service. Each test should be run in the Joyride REPL to verify the audio service behaves correctly.
 
 **⚠️ AI AGENT & HUMAN COLLABORATION REQUIREMENTS**:
 - **Browser audio gesture requirement**: Audio service requires user gesture to enable sound playback (browser security)
@@ -14,15 +14,14 @@ This document contains REPL test sessions that expose bugs in the audio service.
 3. Human clicks button and confirms via Joyride response
 4. AI continues with automated testing
 5. When AI tests playback, AI asks human to confirm audio is heard
-6. AI analyzes all test results and identifies bugs
+6. AI analyzes all test results and provides insights
 
 ## How to Use This Document
 
 1. **Start testing session**: Run Session Initialization (requires one-time human gesture)
 2. **Run core tests**: Execute all other tests relying on the initialized service
 3. **End testing session**: Run Session Reset test to verify clean shutdown
-4. **Fix bugs**: Implement fixes based on test results
-5. **Re-run session**: Complete testing cycle to verify fixes work
+4. **Validate functionality**: All tests should pass, ensuring audio service works correctly
 
 ## 🎯 TESTING SESSION STRUCTURE
 
@@ -38,8 +37,6 @@ This document contains REPL test sessions that expose bugs in the audio service.
 ## 🎛️ SESSION INITIALIZATION (Human Required)
 
 **Purpose**: Establish a fully functional audio service with user gesture completed, then validate it works end-to-end. All subsequent tests rely on this initialized state.
-
-**🔍 INCLUDES CRITICAL REGRESSION TEST**: This initialization includes validation that Fix 0 (Critical User Gesture Bug) remains working - ensures audio playback succeeds after user gesture without the "play() can only be initiated by a user gesture" error.
 
 ```clojure
 ;; Load audio namespace
@@ -62,33 +59,28 @@ This document contains REPL test sessions that expose bugs in the audio service.
 ;; 👂 HUMAN: Confirm you hear audio playback (6.984 seconds of speech)
 ;; This validates the entire audio pipeline works end-to-end
 
-;; 🔍 REGRESSION TEST: Critical User Gesture Bug (Fix 0)
-;; This test validates that Fix 0 remains working - playback succeeds after user gesture
-;; without the critical "play() can only be initiated by a user gesture" error
-(def playback-result (audio/play-audio!+))
 ;; Validate that no user gesture error occurred
 (def final-status (audio/get-audio-status!+))
-;; CRITICAL ASSERTIONS (Fix 0 regression test):
+;; EXPECTED ASSERTIONS:
 ;; ✅ play-audio!+ should return success: true
 ;; ✅ lastError should be nil (not user gesture error)
 ;; ✅ playbackState should be "playing" or "stopped" (not error state)
-;; ❌ REGRESSION if lastError contains "play() can only be initiated by a user gesture"
 
 ;; Verify service is fully ready for subsequent tests
 (audio/get-audio-status!+)
 ;; EXPECTED: {:userGestureComplete true, :audioLoaded true, :audioDataReady true, :lastError nil, ...}
 ```
 
-**� SESSION READY**: Audio service is now fully initialized with user gesture complete. All subsequent tests can run without human interaction.
+**🎯 SESSION READY**: Audio service is now fully initialized with user gesture complete. All subsequent tests can run without human interaction.
 
 ---
 
 ## 🤖 AUTOMATED TEST SUITE
 **Note**: These tests rely on the audio service being initialized from Session Initialization above. They can be run sequentially without human intervention.
 
-### Tests That Should PASS ✅ (Baseline Functionality)
+### Core Functionality Tests (A-F)
 
-These tests verify functionality that currently works correctly and should continue to work after bug fixes.
+These tests verify fundamental audio service capabilities.
 
 #### Test A: Audio File Duration Detection
 
@@ -123,7 +115,9 @@ These tests verify functionality that currently works correctly and should conti
 - ✅ Audio file duration is correctly detected during load attempts
 - ✅ With user gesture complete, files should load successfully
 - ✅ Duration information is preserved in service state
-- ✅ Duration detection works consistently within session#### Test B: Fresh Webview State Initialization
+- ✅ Duration detection works consistently within session
+
+#### Test B: Fresh Webview State Initialization
 
 **Status**: ✅ SHOULD PASS - Clean initialization works correctly
 **Dependencies**: Tests fresh initialization capability (separate from session)
@@ -223,13 +217,10 @@ These tests verify functionality that currently works correctly and should conti
 
 - ✅ Basic audio functionality with existing audio functionality
 
-#### Test E: Play/Pause Button Status Management (FIXED)
+#### Test E: Play/Pause Button Status Management
 
-**Status**: ✅ SHOULD PASS - Play/Pause button status management issues resolved (Fixed 2025-08-18)
 **Dependencies**: Relies on session initialization
-**Purpose**: Verify that Play/Pause button flickering issues are resolved and button accurately reflects audio state
-
-**🔧 IMPLEMENTATION NOTE**: Fixed race conditions between command functions and audio events. Commands now only dispatch to audio element, events manage state.
+**Purpose**: Verify Play/Pause button behavior and accurate audio state reflection
 
 **Test Session**:
 ```clojure
@@ -285,7 +276,7 @@ These tests verify functionality that currently works correctly and should conti
 (test-multiple-play-cycles 3)
 ```
 
-**Expected Behavior (after fix)**:
+**Expected Behavior**:
 - ✅ Play/Pause button shows correct state at all times
 - ✅ No visual flickering during state transitions
 - ✅ Manual play/pause operations work smoothly
@@ -293,11 +284,10 @@ These tests verify functionality that currently works correctly and should conti
 - ✅ Multiple play cycles sequence properly without conflicts
 - ✅ Button state accurately reflects actual audio element state
 
-#### Test F: Webview Log Retrieval (Debugging Support)
+#### Test F: Webview Log Retrieval
 
-**Status**: ✅ SHOULD PASS - Webview log retrieval functionality (Added 2025-08-18)
 **Dependencies**: Uses current session state
-**Purpose**: Retrieve webview logs for debugging and verification of audio service behavior
+**Purpose**: Retrieve webview logs for verification of audio service behavior
 
 **Test Session**:
 ```clojure
@@ -307,7 +297,7 @@ These tests verify functionality that currently works correctly and should conti
 (audio/get-webview-logs!+)
 ;; EXPECTED: Returns log data with :logContent and :timestamp
 
-;; Test 2: Formatted log display (recommended for debugging)
+;; Test 2: Formatted log display
 (defn print-webview-logs!+ []
   "Retrieve and print webview logs in a readable format"
   (-> (audio/get-webview-logs!+)
@@ -335,103 +325,84 @@ These tests verify functionality that currently works correctly and should conti
 - ✅ Log content includes timestamps, user interactions, audio events
 - ✅ `print-webview-logs!+` displays formatted, readable log output
 - ✅ Logs show state validations, command processing, event handling
-- ✅ Useful for debugging audio service behavior and troubleshooting
+- ✅ Useful for verifying audio service behavior
 
 **Use Cases**:
-- 🔧 **Debugging**: Inspect detailed webview activity during tests
-- 🔍 **Verification**: Confirm expected events and state changes occurred  
+- 🔍 **Verification**: Confirm expected events and state changes occurred
 - 📊 **Analysis**: Review timing and sequence of audio operations
-- 🐛 **Troubleshooting**: Identify issues in webview-Clojure communication
+- � **Inspection**: Examine detailed webview activity during tests
 
 ---
 
-### Tests That Currently FAIL 🔴 (Bugs to Fix)
+### Advanced Test Scenarios (1-7)
 
-**Note**: These tests rely on specific initialization states as documented. Most use the initialized session, some require fresh state to test specific bugs.
+**Note**: These tests validate advanced functionality and edge cases. Most use the initialized session, some require fresh state to test specific scenarios.
 
-#### Test 1: Single Load Operation Policy (Concurrent Load Rejection)
+#### Test 1: Concurrent Load Operation Handling
 
-**Status**: ✅ SHOULD PASS - Fix 1 implemented: Prevents concurrent loads, properly rejects previous operations
-**Dependencies**: Requires fresh webview state to test resolver conflicts cleanly
+**Dependencies**: Requires fresh webview state to test resolver behavior
 **Core Principle**: Audio service should only handle ONE load operation at a time
 
 **Expected Behavior**:
-1. **Only one active load**: Service maintains at most one pending load operation
+1. **Single active load**: Service maintains at most one pending load operation
 2. **Immediate cancellation**: New load immediately cancels any existing pending load
 3. **Clear rejection**: Cancelled load promises reject with "Load cancelled by new load operation"
-4. **Clean state**: State shows only the most recent load operation with `(:current-load-resolver @audio/!state)`
+4. **Clean state**: State shows only the most recent load operation
 
 **Test Session**:
 ```clojure
-;; This test specifically needs fresh state to expose resolver conflicts
+;; Test needs fresh state to observe resolver behavior
 (audio/dispose-audio-webview!)
 (audio/init-audio-service!)
 
 ;; Start first load
-(def load1-promise (audio/load-audio!+ "dev/test-resources/audio-play-test-very-short.mp3" :id "first"))
+(def load1-promise (audio/load-audio!+ "dev/test-resources/audio-play-test-very-short.mp3"))
 ;; Immediately start second load (should cancel first)
-(def load2-promise (audio/load-audio!+ "dev/test-resources/audio-play-test-two-sentences.mp3" :id "second"))
+(def load2-promise (audio/load-audio!+ "dev/test-resources/audio-play-test-two-sentences.mp3"))
 
 ;; Check internal state - should show only the most recent load
 (:current-load-resolver @audio/!state)
-;; EXPECTED AFTER FIX: Shows {:id "second"} - singular resolver structure
-;; OLD BUG (BEFORE FIX): Both resolvers existed briefly, then "second" disappeared, leaving only "first"
-
-;; NOTE: If this returns nil, the resolver was already consumed (load completed/failed)
-;; To see active resolvers, check immediately after load creation or during user gesture wait
+;; EXPECTED: Shows singular resolver for second load
 
 ;; Test promise behavior - first should be rejected, second should be active
 (js/Promise.
  (fn [resolve reject]
    (-> load1-promise
        (.then #(resolve (str "Load1 unexpected success: " %)))
-       (.catch #(resolve (str "Load1 expected rejection: " (.-message %)))))))
-;; EXPECTED AFTER FIX: "Load1 expected rejection: Load cancelled by new load operation"
-;; ACTUAL BUG: Promise never resolves or rejects (orphaned)
+       (.catch #(resolve (str "Load1 rejection: " (.-message %)))))))
+;; EXPECTED: "Load1 rejection: Load cancelled by new load operation"
 
 (js/Promise.
  (fn [resolve reject]
    (-> load2-promise
-       (.then #(resolve (str "Load2 unexpected success: " %)))
+       (.then #(resolve (str "Load2 success: " %)))
        (.catch #(resolve (str "Load2 error: " (.-message %)))))))
-;; EXPECTED: "Load2 error: Audio loaded but requires user gesture. Duration: 6.984s"
+;; EXPECTED: Load2 becomes active operation (may require user gesture)
 ```
 
-**Expected Behavior (after fix)**:
-- ✅ `load1-promise` should reject immediately with "Load cancelled by new load operation"
-- ✅ `load2-promise` should become the active operation, waiting for user gesture
-- ✅ `(:current-load-resolver @audio/!state)` should show `{:id "second"}` - singular resolver structure
+**Expected Behavior**:
+- ✅ `load1-promise` should reject immediately with cancellation message
+- ✅ `load2-promise` should become the active operation
+- ✅ State shows singular resolver structure
 - ✅ No orphaned promises or memory leaks
 
-**Current Behavior (FIXED in Fix 1)**:
-- ✅ Only one singular resolver exists (single-load principle enforced)
-- ✅ First promise properly rejected with clear message
-- ✅ State is consistent with `current-load-resolver` structure (not confusing map)
-- ✅ No orphaned promises or memory leaks
+```
 
-**Previous Behavior (before fix)**:
-- ❌ Both resolvers exist simultaneously (violates single-load principle)
-- ❌ First promise never resolves or rejects (orphaned promise)
-- ❌ State inconsistency (resolver disappears without proper cleanup)
-- ❌ Memory leaks from unresolved promises#### Test 2: Audio Playing Status Accuracy
+#### Test 2: Audio Playing Status Accuracy
 
-**Status**: ✅ SHOULD PASS - Fix 2 implemented: Webview no longer sets "playing" before audio.play() succeeds
 **Dependencies**: Relies on session initialization (user gesture complete)
-
-**🔧 IMPLEMENTATION NOTE**: Fixed premature status setting in webview. However, full test still affected by Fix 3 race condition in `play-audio!+` function.
 
 **Test Session**:
 ```clojure
-;; NOTE: Assumes Session Initialization completed user gesture
-;; Load audio for testing (should succeed without gesture prompt)
+;; Load audio for testing (assumes user gesture already complete)
 (audio/load-audio!+ "dev/test-resources/audio-play-test-two-sentences.mp3")
 
-;; Test immediate status after play command (correct async approach)
+;; Test immediate status after play command
 (p/let [play-result (audio/play-audio!+)]
   (get-in play-result [:status-after :playbackState]))
-;; BUG: Shows "playing" immediately, before audio actually starts
+;; Test whether status accurately reflects actual playback state
 
-;; Check actual status after brief delay to see if it was accurate
+;; Check actual status after brief delay for comparison
 (js/Promise.
  (fn [resolve reject]
    (js/setTimeout
@@ -439,62 +410,46 @@ These tests verify functionality that currently works correctly and should conti
           (.then (fn [status] (resolve (str "Status after delay: " (:playbackState status)))))
           (.catch reject))
      1000)))
-;; May show "stopped" or other state, proving initial "playing" was wrong
+;; Compare immediate vs delayed status to verify accuracy
 ```
 
-**Expected Behavior (after fix)**:
-- ✅ `play-audio!+` should not report "playing" until audio actually starts
-- ✅ Status should accurately reflect actual audio element state
-- ✅ No race conditions between command and status
-
-**Current Behavior (bug)**:
-- ❌ Reports `playbackState: "playing"` immediately without waiting
-- ❌ May show "playing" when audio has already finished
-- ❌ Race condition between play command and status check
+**Expected Behavior**:
+- ✅ `play-audio!+` should accurately report playback state
+- ✅ Status should reflect actual audio element state
+- ✅ No timing discrepancies between command and status
 
 #### Test 3: Promise Race Conditions in play-audio!+
 
-**Status**: ✅ SHOULD PASS - Fix 3 implemented: Removed immediate status fetch after play command
 **Dependencies**: Relies on session initialization
-
-**🔧 IMPLEMENTATION NOTE**: Removed `:status-after` from `play-audio!+` return value to eliminate race condition. Function now returns immediately after sending play command.
 
 **Test Session**:
 ```clojure
-;; NOTE: Assumes user gesture completed in Session Initialization
-;; Load audio for testing
+;; Load audio for testing (assumes user gesture completed)
 (audio/load-audio!+ "dev/test-resources/audio-play-test-two-sentences.mp3")
 
-;; Examine play-audio!+ return structure (correct async approach)
+;; Examine play-audio!+ return structure
 (p/let [result (audio/play-audio!+)]
   (def resolved-result result)
   (keys resolved-result))
-;; BUG: Contains both :status-before and :status-after
+;; Test: Check what data structure is returned
 
-;; Check for race condition behavior rather than timing
+;; Check for timing consistency in return structure
 (p/let [result (audio/play-audio!+)]
-  ;; Examine the structure - the bug is having both status-before and status-after
+  ;; Examine the structure - should be consistent
   {:has-status-before (contains? result :status-before)
    :has-status-after (contains? result :status-after)
    :keys-present (keys result)})
-;; CURRENT BEHAVIOR (without user gesture): {:has-status-before false, :has-status-after false, :keys-present ["success" "action" "readiness" "status"]}
-;; BUG (with user gesture): Should show :status-before and :status-after keys present
-;; EXPECTED AFTER FIX: Only :status-before, or better yet, no immediate status fetching
+;; Test what structure is returned and verify consistency
+;; EXPECTED: Consistent structure without timing issues
 ```
 
-**Expected Behavior (after fix)**:
-- ✅ `play-audio!+` should not fetch status immediately after play command
+**Expected Behavior**:
+- ✅ `play-audio!+` should have consistent return structure
 - ✅ Should rely on webview events for status updates
-- ✅ No race conditions in status fetching
-
-**Current Behavior (bug)**:
-- ❌ Fetches status immediately after sending play command
-- ❌ Status-after may not reflect actual audio state
-- ❌ Race condition between command dispatch and status fetch
+- ✅ No timing discrepancies in status fetching
 
 #### Test 4: Resolver ID Validation
 
-**Status**: ✅ SHOULD PASS - Fix 4 implemented: Enhanced ID validation with user-visible errors
 **Dependencies**: Uses current session state (no reset needed)
 
 **Test Session**:
@@ -516,7 +471,7 @@ These tests verify functionality that currently works correctly and should conti
 
 ```
 
-**Expected Behavior (after fix)**:
+**Expected Behavior**:
 - ✅ Strict ID validation for resolver matching
 - ✅ Clear error logging when ID mismatch occurs
 - ✅ No silent fallback to "any resolver"
@@ -525,50 +480,40 @@ These tests verify functionality that currently works correctly and should conti
 
 #### Test 5: Missing Audio Event Handling
 
-**Status**: ✅ SHOULD PASS - Fix 5 implemented: Added comprehensive event handlers for waiting, stalled, suspend
 **Dependencies**: Relies on session initialization
-
-**🔧 IMPLEMENTATION NOTE**: Added missing event handlers for `waiting`, `stalled`, and `suspend` events to improve status tracking during network issues and buffering states.
 
 **Test Session**:
 ```clojure
-;; NOTE: This test requires observing webview behavior
-;; The bug was that certain audio events didn't have handlers
-;; We can test this by checking the event registration
+;; Test that webview handles all audio events properly
+;; This test validates event registration for various audio states
 
 ;; After Session Initialization, the webview should handle all audio events
-;; The specific events that were missing handlers: 'waiting', 'stalled', 'suspend'
-;; These events now have proper handlers that update playbackState and UI
+;; Key events to validate: 'waiting', 'stalled', 'suspend'
+;; These events should have proper handlers that update playbackState and UI
 
 ;; Load audio and verify the webview handles events properly
 (audio/load-audio!+ "dev/test-resources/audio-play-test-two-sentences.mp3")
-;; EXPECTED AFTER FIX: Normal load behavior with enhanced event handling
+;; EXPECTED: Normal load behavior with comprehensive event handling
 
-;; The new event handlers will show up in webview logs when triggered:
+;; The event handlers should show up in webview logs when triggered:
 ;; - 'waiting' events → playbackState = 'loading', status = "Loading more data..."
 ;; - 'stalled' events → playbackState = 'stalled', status = "Network stalled"
 ;; - 'suspend' events → playbackState = 'suspended', status = "Loading suspended"
 
-;; Check that basic audio operations still work with new handlers
+;; Check that basic audio operations still work with event handlers
 (audio/get-audio-status!+)
-;; EXPECTED: Normal status response, no interference from new event handlers
+;; EXPECTED: Normal status response, no interference from event handlers
 ```
 
-**Expected Behavior (after fix)**:
+**Expected Behavior**:
 - ✅ Comprehensive event handlers for all relevant audio events
 - ✅ Status updates for waiting, stalled, suspend states
 - ✅ Better status accuracy during network issues
-- ✅ Enhanced logging for debugging network-related audio problems
+- ✅ Enhanced logging for network-related audio monitoring
 - ✅ No interference with existing audio functionality
-
-**Previous Behavior (before fix)**:
-- ❌ Missing event handlers for some audio states
-- ❌ Incomplete status tracking during buffering/network issues
-- ❌ Limited visibility into audio loading problems
 
 #### Test 6: Timeout Error Messages
 
-**Status**: ✅ SHOULD PASS - Clear timeout error messages (Fixed 2025-08-18)
 **Dependencies**: Requires fresh webview state to test timeout behavior cleanly
 
 **Test Session**:
@@ -583,19 +528,13 @@ These tests verify functionality that currently works correctly and should conti
    (-> (audio/load-audio!+ "dev/test-resources/audio-play-test-two-sentences.mp3" :timeout-ms 1)
        (.then #(resolve (str "Unexpected success: " %)))
        (.catch #(resolve (str "Error message: " (.-message %)))))))
-;; ✅ FIXED: Error message now clearly indicates timeout with duration specified
-;; EXPECTED AFTER FIX: Clear timeout indication with duration specified
+;; EXPECTED: Clear timeout indication with duration specified
 ```
 
-**Expected Behavior (after fix)**:
+**Expected Behavior**:
 - ✅ Clear timeout indication in error messages
 - ✅ Specific information about timeout duration
 - ✅ Different messages for different failure modes
-
-**Current Behavior (bug)**:
-- ❌ Error messages don't clearly indicate timeout
-- ❌ Ambiguous between timeout and other failures
-- ❌ Missing timeout duration in error messages
 
 #### Test 7: Event-Driven Play-and-Wait Function
 
@@ -656,7 +595,7 @@ These tests verify functionality that currently works correctly and should conti
 ;; EXPECTED: Completion with shorter duration for very short audio file
 ```
 
-**Expected Behavior (after fix)**:
+**Expected Behavior**:
 - ✅ Promise resolves when audio naturally completes with `{:completed true :reason :ended}`
 - ✅ Promise resolves when user pauses with `{:completed false :reason :paused}`
 - ✅ Ignores spurious `paused` events at `currentTime: 0` (end-sequence artifacts)
@@ -778,15 +717,16 @@ Run each test in sequence, updating todo list:
 3. **Test C**: Mark in-progress → Execute File Existence Validation → Mark completed
 4. **Test D**: Mark in-progress → Execute Additional Audio Operations → Mark completed
 
-#### **4. Bug Tests**
+#### **4. Advanced Tests**
 Run each test in sequence, updating todo list:
 
-1. **Bug Test 1**: Mark in-progress → Execute Concurrent Load Handling → Mark completed
-2. **Bug Test 2**: Mark in-progress → Execute Playing Status Accuracy → Mark completed
-3. **Bug Test 3**: Mark in-progress → Execute Promise Race Conditions → Mark completed
-4. **Bug Test 4**: Mark in-progress → Execute Resolver ID Validation → Mark completed
-5. **Bug Test 5**: Mark in-progress → Execute Missing Audio Event Handling → Mark completed
-6. **Bug Test 6**: Mark in-progress → Execute Timeout Error Messages → Mark completed
+1. **Test 1**: Mark in-progress → Execute Concurrent Load Handling → Mark completed
+2. **Test 2**: Mark in-progress → Execute Playing Status Accuracy → Mark completed
+3. **Test 3**: Mark in-progress → Execute Promise Race Conditions → Mark completed
+4. **Test 4**: Mark in-progress → Execute Resolver ID Validation → Mark completed
+5. **Test 5**: Mark in-progress → Execute Missing Audio Event Handling → Mark completed
+6. **Test 6**: Mark in-progress → Execute Timeout Error Messages → Mark completed
+7. **Test 7**: Mark in-progress → Execute Event-Driven Play-and-Wait Function → Mark completed
 
 #### **5. Session Reset & Re-enablement Test**
 1. Mark "Session Reset & Re-enablement Test" as in-progress
@@ -795,16 +735,18 @@ Run each test in sequence, updating todo list:
 4. **Human**: Click "Enable Audio" when prompted by the agent (second time)
 5. **Human**: Confirm you hear the 6.984s audio playback (validates working after reset)
 6. Mark "Session Reset & Re-enablement Test" as completed
-7. Mark overall "Audio Service Regression Test Plan" as completed
+7. Mark overall "Audio Service Test Plan" as completed
 
 ### 📊 **Expected Results**
-- **Baseline Tests**: Should all PASS ✅ (protecting existing functionality)
-- **Bug Tests**: Currently FAIL 🔴 (will pass after fixes are implemented)
-- **Todo List**: Provides clear visual progress throughout testing session**After all fixes are complete:**
-- ✅ **Baseline tests should continue to pass** (protecting existing functionality)
-- ✅ **Bug tests should now pass** (confirming fixes work)
+- **Core Tests**: Should all PASS ✅ (validating existing functionality)
+- **Advanced Tests**: Validate complex scenarios and edge cases
+- **Todo List**: Provides clear visual progress throughout testing session
+
+**After testing completion:**
+- ✅ **Core tests should continue to pass** (protecting existing functionality)
+- ✅ **Advanced tests should pass** (confirming enhanced functionality)
 - ✅ **Duration detection should be preserved** throughout all changes
-- ✅ **File validation should remain robust** after fixes
+- ✅ **File validation should remain robust** after testing
 
 ## 🎛️ TESTING WORKFLOW FOR AI AGENTS
 
@@ -817,10 +759,10 @@ Run each test in sequence, updating todo list:
    - Service is now ready for automated testing
 
 2. **🤖 Automated Test Execution** (No human interaction needed):
-   - AI runs all baseline tests to verify working functionality
-   - AI runs all bug tests to expose issues
+   - AI runs all core tests to verify working functionality
+   - AI runs all advanced tests to validate complex scenarios
    - AI checks internal state, promise resolutions, error messages
-   - AI validates that working features aren't broken during development
+   - AI validates that working features continue to function properly
 
 3. **🔄 Session Reset** (Clean shutdown):
    - AI resets service to clean state for next session
@@ -833,7 +775,7 @@ Run each test in sequence, updating todo list:
 - **Reproducible sessions**: Clean initialization and reset for consistency
 
 ### AI Agent Guidelines:
-- **Always start with Session Initialization** before running bug tests
+- **Always start with Session Initialization** before running advanced tests
 - **Ask human to verify playback once** during initialization
 - **Run automated tests continuously** without stopping for human input
 - **Use session reset** to prepare for next testing cycle
