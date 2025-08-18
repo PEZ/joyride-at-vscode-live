@@ -200,6 +200,25 @@
                        (swap! !state remove-resolver :status-resolvers "current")
                        (reject "Status request timeout")) 5000))))
 
+(defn check-user-gesture!+
+  "Check if user gesture has been completed"
+  []
+  (p/let [status (get-audio-status!+)]
+    (:userGestureComplete status)))
+
+(defn prompt-user-for-audio-gesture!+
+  "Show user a message to enable audio and wait for confirmation"
+  []
+  (p/create
+   (fn [resolve reject]
+     (-> (vscode/window.showInformationMessage
+          "🔊 Please enable audio in the webview by clicking the 'Enable Audio' button, then click Done."
+          "Done")
+         (.then (fn [selection]
+                  (if (= selection "Done")
+                    (resolve true)
+                    (reject (js/Error. "User cancelled audio setup")))))))))
+
 (defn play-audio!+
   "Smart play that checks readiness first and returns comprehensive info"
   [& {:keys [id]}]
@@ -266,25 +285,6 @@
       (vscode/window.showErrorMessage (.-message e))
       (p/reject! e))))
 
-(defn check-user-gesture!+
-  "Check if user gesture has been completed"
-  []
-  (p/let [status (get-audio-status!+)]
-    (:userGestureComplete status)))
-
-(defn prompt-user-for-audio-gesture!+
-  "Show user a message to enable audio and wait for confirmation"
-  []
-  (p/create
-   (fn [resolve reject]
-     (-> (vscode/window.showInformationMessage
-          "🔊 Please enable audio in the webview by clicking the 'Enable Audio' button, then click Done."
-          "Done")
-         (.then (fn [selection]
-                  (if (= selection "Done")
-                    (resolve true)
-                    (reject (js/Error. "User cancelled audio setup")))))))))
-
 (defn load-and-play-audio!+
   "Load and play audio with proper user gesture checking"
   [file-path]
@@ -306,6 +306,7 @@
          :success true}))))
 
 (comment
+  (init-audio-service!)
   (p/let [load+ (load-audio!+ "dev/test-resources/audio-play-test-very-short.mp3")]
     (def load+ load+))
 
