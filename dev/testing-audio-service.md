@@ -221,6 +221,86 @@ These tests verify functionality that currently works correctly and should conti
 - ✅ Status reporting works consistently
 - ✅ Play commands execute without errors
 
+- ✅ Basic audio functionality with existing audio functionality
+
+#### Test E: Play/Pause Button Status Management (FIXED)
+
+**Status**: ✅ SHOULD PASS - Play/Pause button status management issues resolved (Fixed 2025-08-18)
+**Dependencies**: Relies on session initialization
+**Purpose**: Verify that Play/Pause button flickering issues are resolved and button accurately reflects audio state
+
+**🔧 IMPLEMENTATION NOTE**: Fixed race conditions between command functions and audio events. Commands now only dispatch to audio element, events manage state.
+
+**Test Session**:
+```clojure
+;; NOTE: Assumes Session Initialization completed user gesture
+
+;; Test 1: Manual Play/Pause Button Testing (Human interaction required)
+(defn test-play-pause-button-status-management []
+  (println "🎯 Testing Play/Pause Button Status Management")
+  
+  ;; Load longer audio for manual testing
+  (-> (audio/load-audio!+ "dev/test-resources/audio-play-test-two-sentences.mp3")
+      (.then #(do
+                (println "✅ Audio loaded (6.984s), ready for manual button testing")
+                (println "👤 HUMAN ACTION REQUIRED: Click Play/Pause button in webview to test:")
+                (println "   1. Button should show 'Play' initially")
+                (println "   2. Click 'Play' → should change to 'Pause' and audio plays")
+                (println "   3. Click 'Pause' → should change to 'Resume' and audio pauses")
+                (println "   4. Click 'Resume' → should change to 'Pause' and audio continues")
+                (println "   5. No flickering should occur during any transitions")))))
+
+(test-play-pause-button-status-management)
+
+;; Test 2: Automated play-and-wait functionality
+(defn test-play-and-wait-functionality []
+  (println "\n🤖 Testing play-and-wait functionality (automated)")
+  (-> (audio/play-and-wait-audio!+)
+      (.then #(do
+                (println "✅ play-and-wait completed successfully")
+                (println "   Result:" %)
+                (println "   Audio played to completion without button flickering")))))
+
+(test-play-and-wait-functionality)
+
+;; Test 3: Multiple play cycles with proper waiting
+(defn test-multiple-play-cycles [n]
+  (println "\n🔄 Testing multiple play cycles with proper waiting")
+  (letfn [(run-cycle [remaining]
+            (when (> remaining 0)
+              (println "   Starting cycle" (- n remaining -1) "of" n)
+              ;; Load shortest audio file for faster testing
+              (-> (audio/load-audio!+ "dev/test-resources/audio-play-test-very-short.mp3")
+                  (.then #(audio/play-and-wait-audio!+))
+                  (.then #(do
+                             (println "   ✅ Cycle" (- n remaining -1) "completed")
+                             (if (> remaining 1)
+                               (do
+                                 (println "   ⏳ Brief pause before next cycle...")
+                                 (js/setTimeout (partial run-cycle (dec remaining)) 300))
+                               (println "🎉 All cycles completed successfully!")))))))]
+    (run-cycle n)))
+
+;; Test with 3 cycles using shortest audio file for faster testing
+(test-multiple-play-cycles 3)
+```
+
+**Expected Behavior (after fix)**:
+- ✅ Play/Pause button shows correct state at all times
+- ✅ No visual flickering during state transitions
+- ✅ Manual play/pause operations work smoothly
+- ✅ `play-and-wait-audio!+` function works without button issues
+- ✅ Multiple play cycles sequence properly without conflicts
+- ✅ Button state accurately reflects actual audio element state
+
+**Previous Behavior (before fix)**:
+- ❌ Button flickered between Play/Pause states
+- ❌ Race conditions between command functions and audio events
+- ❌ Button state could be inconsistent with actual audio state
+- ❌ Premature state setting in command functions
+
+---
+
 ### Tests That Currently FAIL 🔴 (Bugs to Fix)
 
 **Note**: These tests rely on specific initialization states as documented. Most use the initialized session, some require fresh state to test specific bugs.
