@@ -123,13 +123,7 @@
             :ended (do
                      (resolve {:completed true :reason :ended :event-data event-data})
                      (swap! !state remove-completion-resolver completion-id))
-            :paused (if (= current-time 0)
-                      ;; Ignore paused events at currentTime 0 - they're part of the end sequence
-                      (println "🔇 Ignoring paused event at currentTime 0 (end sequence)")
-                      ;; Real user pause - resolve with paused status
-                      (do
-                        (resolve {:completed false :reason :paused :event-data event-data})
-                        (swap! !state remove-completion-resolver completion-id)))
+            :paused (println "⏸️ Audio paused, continuing to wait for completion...")
             :error (do
                      (reject (js/Error. (str "Audio error: " (:error event-data))))
                      (swap! !state remove-completion-resolver completion-id))
@@ -332,8 +326,9 @@
       (p/reject! e))))
 
 (defn play-and-wait-audio!+
-  "Play audio and wait for completion using events instead of polling.
-   Returns a promise that resolves when audio finishes or user stops it."
+  "Play audio and wait for natural completion (ended event).
+   Ignores user pauses - continues waiting if user pauses then resumes.
+   Returns a promise that resolves only when audio finishes playing completely."
   [& {:keys [id]}]
   (let [audio-id (or id "default")
         completion-id (str "completion-" audio-id "-" (js/Date.now))]
