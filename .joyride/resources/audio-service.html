@@ -106,7 +106,7 @@
                 log('AUDIO NOW FULLY READY - Both data loaded and user gesture complete');
                 audioStatus.playbackState = 'ready';
                 updateStatus('Audio ready for playback', 'success');
-                updatePlayPauseButton();
+                debouncedUpdatePlayPauseButton();
 
                 // Notify Joyride that audio is ready to play
                 vscode.postMessage({
@@ -193,37 +193,28 @@
             }
 
             log('  Prerequisites met - calling audio.play()');
-            audio.play().then(() => {
-                log('Audio play() succeeded');
-                audioStatus.playbackState = 'playing';
-                updateStatus('Playing', 'success');
-                updatePlayPauseButton();
-            }).catch(err => {
+            // FIX: Do NOT set playbackState here - let 'playing' event handle it
+            audio.play().catch(err => {
                 const msg = 'Audio play() failed: ' + err.message;
                 log('Audio play() error: ' + msg);
                 audioStatus.lastError = msg;
-                audioStatus.playbackState = 'stopped';
+                audioStatus.playbackState = 'error';
                 updateStatus(msg, 'error');
-                updatePlayPauseButton();
+                debouncedUpdatePlayPauseButton();
             });
         }
 
         function pauseAudio() {
+            // FIX: Do NOT set playbackState here - let 'pause' event handle it
             audio.pause();
-            audioStatus.playbackState = 'paused';
-            log('Audio paused');
-            updateStatus('Paused');
-            updatePlayPauseButton();
+            log('Audio pause command sent');
         }
 
         function stopAudio() {
             audio.pause();
             audio.currentTime = 0;
-            // Explicitly set stopped state (don't rely on pause event)
-            audioStatus.playbackState = 'stopped';
-            log('Audio stopped');
-            updateStatus('Stopped');
-            updatePlayPauseButton();
+            // FIX: Do NOT set playbackState here - let events handle it
+            log('Audio stop command sent');
         }
 
         function togglePlayPause() {
@@ -234,11 +225,38 @@
             }
         }
 
+        // FIX: Add debouncing to prevent button flickering
+        let updateButtonTimeout = null;
+
+        function debouncedUpdatePlayPauseButton() {
+            if (updateButtonTimeout) {
+                clearTimeout(updateButtonTimeout);
+            }
+            updateButtonTimeout = setTimeout(() => {
+                updatePlayPauseButton();
+                updateButtonTimeout = null;
+            }, 10); // Small delay to batch rapid updates
+        }
+
         function updatePlayPauseButton() {
             const button = document.getElementById('play-pause-button');
             if (!button) return;
 
-            switch(audioStatus.playbackState) {
+            // FIX: Add state validation against actual audio element
+            let effectiveState = audioStatus.playbackState;
+            
+            // Validate state against audio element as fallback
+            if (audio && !audio.paused && effectiveState !== 'playing') {
+                log('State validation: audio playing but state is ' + effectiveState + ', correcting to playing');
+                effectiveState = 'playing';
+                audioStatus.playbackState = 'playing';
+            } else if (audio && audio.paused && audio.currentTime > 0 && effectiveState === 'playing') {
+                log('State validation: audio paused but state is playing, correcting to paused');
+                effectiveState = 'paused';
+                audioStatus.playbackState = 'paused';
+            }
+
+            switch(effectiveState) {
                 case 'playing':
                     button.textContent = 'Pause';
                     button.style.background = '#ff9800';
@@ -315,7 +333,7 @@
         audio.addEventListener('loadstart', () => {
             log('Audio: loadstart');
             audioStatus.playbackState = 'loading';
-            updatePlayPauseButton();
+            debouncedUpdatePlayPauseButton();
         });
 
         audio.addEventListener('loadeddata', () => {
@@ -334,7 +352,7 @@
             log('Audio: playing');
             audioStatus.playbackState = 'playing';
             updateStatus('Playing', 'success');
-            updatePlayPauseButton();
+            debouncedUpdatePlayPauseButton();
         });
 
         audio.addEventListener('pause', () => {
@@ -343,7 +361,7 @@
             if (audioStatus.playbackState !== 'stopped' && audioStatus.playbackState !== 'error') {
                 audioStatus.playbackState = 'paused';
                 updateStatus('Paused');
-                updatePlayPauseButton();
+                debouncedUpdatePlayPauseButton();
 
                 // Notify Joyride about audio pause (only if it was actually paused, not stopped)
                 vscode.postMessage({
@@ -360,7 +378,7 @@
             log('Audio: ended');
             audioStatus.playbackState = 'stopped';
             updateStatus('Stopped');
-            updatePlayPauseButton();
+            debouncedUpdatePlayPauseButton();
 
             // Notify Joyride about audio completion
             log('SENDING audioCompletion event: ended');
@@ -382,7 +400,7 @@
             audioStatus.audioDataReady = false;  // Reset data ready flag on error
             audioStatus.audioLoaded = false;     // Reset loaded flag on error
             updateStatus(msg, 'error');
-            updatePlayPauseButton();
+            debouncedUpdatePlayPauseButton();
 
             // Notify Joyride about the load failure
             vscode.postMessage({
@@ -412,21 +430,21 @@
             log('Audio: waiting - loading more data');
             audioStatus.playbackState = 'loading';
             updateStatus('Loading more data...', 'info');
-            updatePlayPauseButton();
+            debouncedUpdatePlayPauseButton();
         });
 
         audio.addEventListener('stalled', () => {
             log('Audio: stalled - network issues');
             audioStatus.playbackState = 'stalled';
             updateStatus('Network stalled', 'error');
-            updatePlayPauseButton();
+            debouncedUpdatePlayPauseButton();
         });
 
         audio.addEventListener('suspend', () => {
             log('Audio: suspend - loading suspended');
             audioStatus.playbackState = 'suspended';
             updateStatus('Loading suspended', 'info');
-            updatePlayPauseButton();
+            debouncedUpdatePlayPauseButton();
         });
 
         // Message handler from Joyride
