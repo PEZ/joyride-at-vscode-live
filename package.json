@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "ai-text-to-speech": "^1.0.5"
+    "ai-text-to-speech": "^1.0.5",
+    "posthtml-parser": "^0.12.1"
   }
 }
