@@ -45,7 +45,15 @@ When you get feedback on a narration script, consider that the feedback does not
 
 ## Technical Execution
 
+0. **Always use these tools first** to get comprehensive, up-to-date information:
+  - `joyride_basics_for_agents` - Technical guide for LLM agents using Joyride evaluation capabilities
+  - `joyride_assisting_users_guide` - Complete user assistance guide with project structure, patterns, examples, and troubleshooting
+
+  These tools contain all the detailed information about Joyride APIs, project structure, common patterns, user workflows, and troubleshooting guidance.
+
 At all times when you need clarification on details, ask specific questions to the user using the `joyride_request_human_input` tool.
+
+### Process
 
 1. Consider how many slides you are supposed to create (if you don't have a number for this, ask the user)
 2. Treat each slide is a chapter in the story
