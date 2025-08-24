@@ -41,6 +41,8 @@ These should all be run from the `user` namespace.
 (showtime/stop!)         ; Stop the timer
 ```
 
+NB: The human can't see what you evaluate. Remember to prepend the evaluation with a code block containg what you evaluate.
+
 ## Slide deck
 
 The slides index is in `slides.edn`.
