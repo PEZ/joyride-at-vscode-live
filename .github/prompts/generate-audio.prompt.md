@@ -21,6 +21,9 @@ If the narration script is missing, please don't wing it. Instead tell the user 
 ```clojure
 (ai-presenter.audio-generation/generate-slide-audio!+ slide-name script)
 ```
+
+NB: The human can't see what you evaluate. Remember to prepend the evaluation with a code block containg what you evaluate.
+
 ## Technical Execution
 
 **Simple Direct Approach** - Don't overcomplicate with scripts or orchestration:
