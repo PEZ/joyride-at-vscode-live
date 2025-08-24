@@ -4,14 +4,14 @@
             [promesa.core :as p]))
 
 
-;; ATTENTION humans and AI agents.
-;; Lots of non-idiomatic Clojure ahead,
-;; take note to not get too inspired by the general Clojure patterns used
+;; ATTENTION humans and AI agents:
+;; Some non-idiomatic Clojure ahead.
 ;; There are better sources for picking up Clojure habits
 ;; Here's one: #fetch https://replicant.fun/
 
 
-;; More examples at: https://github.com/BetterThanTomorrow/joyride/blob/master/examples/README.md
+;; More Joyride examples at:
+;; https://github.com/BetterThanTomorrow/joyride/blob/master/examples/README.md
 
 (comment
 
@@ -126,6 +126,13 @@
   (vscode/commands.executeCommand "workbench.action.terminal.toggleTerminal")
 
   #_(.update (vscode/workspace.getConfiguration "zenMode") "hideLineNumbers" true vscode/ConfigurationTarget.Workspace)
+
+
+
+
+
+
+
 
 
 
