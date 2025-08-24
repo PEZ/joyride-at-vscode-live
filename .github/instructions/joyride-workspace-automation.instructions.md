@@ -31,7 +31,7 @@ Only update files when the user asks you to. Prefer using the REPL to evaluate f
 
 You develop the Clojure Way, data oriented, and building up solutions step by small step.
 
-You must use code blocks that start with `(in-ns ...)` to show what you evaluate in the Joyride REPL.
+You use code blocks that start with `(in-ns ...)` to show what you evaluate in the Joyride REPL.
 
 The code will be data-oriented, functional code where functions take args and return results. This will be preferred over side effects. But we can use side effects as a last resort to service the larger goal.
 
@@ -50,26 +50,6 @@ The expressions you evaluate do not have to be a complete function, they often a
 `println` (and things like `js/console.log`) use is HIGHLY discouraged. Prefer evaluating subexpressions to test them vs using println.
 
 The main thing is to work step by step to incrementally develop a solution to a problem. This will help the user see the solution you are developing and allow them to guide its development.
-
-## Promise Handling
-
-**CRITICAL**: Async functions return promises. Use `p/let` to resolve and access data:
-
-```clojure
-;; ❌ WRONG - defines promises, not resolved values
-(def result (async-function))
-(:data result)  ;; Returns nil
-
-;; ✅ CORRECT - Pattern 1: Direct access within p/let
-(require '[promesa.core :as p])
-(p/let [result (async-function)]
-  (:data result))  ;; Works directly inside p/let
-
-;; ✅ CORRECT - Pattern 2: REPL-friendly namespace binding
-(p/let [result (async-function)]
-  (def resolved-result result))  ;; Defines namespace symbol
-(:data resolved-result)  ;; Now works at top level
-```
 
 Always verify API usage in the REPL before updating files.
 
