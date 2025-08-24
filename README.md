@@ -1,6 +1,6 @@
 # VS Code Live Joyride demo
 
-[Joyride](https://marketplace.visualstudio.com/items?itemName=betterthantomorrow.joyride) is a [VS Code](https://code.visualstudio.com/) extension that lets you customize and automate your VS Code experience. In user space (Emacs style). Joyride's Language Model tools enables Copilot to hack VS Code with you, or even for you.
+[Joyride](https://marketplace.visualstudio.com/items?itemName=betterthantomorrow.joyride) is a [VS Code](https://code.visualstudio.com/) extension that lets you customize and automate your VS Code experience. In user space (Emacs style). Joyride's Language Model tools enable Copilot to hack VS Code with you, or even for you.
 
 <div style="position: relative; display: inline-block;">
   <a href="https://www.youtube.com/watch?v=Nt1p6yreAUU">
@@ -40,7 +40,7 @@ The project has a script for showing and navigating slides, [next_slide.cljs](.j
 
 The slide notes script helps you to maintain notes to your slides. It can also generate a paginated PDF (requires [Pandoc](https://pandoc.org/installing.html)).
 
-Both these script have keyboard shortcuts definitions at the top, as comments. You can uncomment, copy, and paste it in your keybindings JSON file. Adapt the actual bindings if they don't fit you. (Though pagedown, etc are for usin a clicker, so don't change those if you are going to use a clicker. 😀)
+Both these scripts have keyboard shortcuts definitions at the top, as comments. You can uncomment, copy, and paste it in your keybindings JSON file. Adapt the actual bindings if they don't fit you. (Though pagedown, etc are for using a clicker, so don't change those if you are going to use a clicker. 😀)
 
 ### Generate audio (TTS)
 
@@ -51,6 +51,8 @@ There is a script that can generate speech audio from text. This is more experim
 Experimental, but mostly working fine. Uses a webview for playback, and this requires that you click the **Enable Audio** button in the view (because browser security).
 
 ### Examples namespace
+
+TBD
 
 ## Shortcuts
 
@@ -91,7 +93,7 @@ Also recommended: Cloning and opening this project in VS Code and follow along w
   * [Joyride API](https://github.com/BetterThanTomorrow/joyride/blob/master/doc/api.md)
   * [Examples](https://github.com/BetterThanTomorrow/joyride/tree/master/examples)
 * [Playlist on CalvaTV (YouTube)](https://www.youtube.com/playlist?list=PLPb7X_9OOo7otHhDdSWnh_G9B531whMRx)
-* Slack: Join [Clojurians slack](clojurians.net), and `#joyride`
+* Slack: Join [Clojurians slack](http://clojurians.net), and `#joyride`
 
 Joyride was created by Peter Strömberg and Michiel Borkent (a.k.a. PEZ and Borkdude). We are two tool smiths embedded in the [Clojure](https://clojure.org/) community.
 
