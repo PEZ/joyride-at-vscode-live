@@ -53,10 +53,18 @@ Hooks to: The next slide, which reveals the tool (Joyride) that makes this empow
 
 ## Narration Script
 
-Have you ever wished: "If only there was an extension that did exactly **this** in exactly **that** way!"?
+[pause]
 
-The thing is that no one else knows your workflow like you do.
+Have you ever wished... "If only there was an extension that did exactly _this_... in exactly _that_ way."?
 
-What you need is Joyride, and user space scripting.
+[pause]
 
-Become a VS Code hacker, someone who don't adapt to your tools—you make your tools adapt to you.
+The thing is... no one else knows your workflow like _you_ do.
+
+[pause]
+
+What you need is Joyride... and user space scripting.
+
+[pause]
+
+Become a VS Code hacker... someone who doesn't _adapt_ to your tools... you make your tools adapt to _you_.
