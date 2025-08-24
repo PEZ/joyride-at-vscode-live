@@ -1,1 +1,2 @@
-{:paths [".joyride/scripts" ".joyride/src" ".joyride/test"]}
+{:deps {org.clojure/clojurescript {:mvn/version "1.12.42"}}
+ :paths [".joyride/scripts" ".joyride/src" ".joyride/test"]}
