@@ -41,5 +41,7 @@
     "calva.autoOpenJackInTerminal": false,
     "calva.autoOpenInspector": false,
     "calva.autoOpenResultOutputDestination": false,
+    "zenMode.hideLineNumbers": true,
+    "terminal.integrated.fontSize": 16,
 
 }
