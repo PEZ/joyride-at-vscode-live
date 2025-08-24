@@ -381,8 +381,24 @@
    "simpleBrowser.show"
    "https://github.com/BetterThanTomorrow/joyride/blob/master/doc/api.md")
 
-  (vscode/env.openExternal
-   (vscode/Uri.parse "https://github.com/BetterThanTomorrow/joyride/blob/master/doc/api.md"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
