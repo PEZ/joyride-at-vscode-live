@@ -162,6 +162,51 @@
 
 
 
+
+
+
+
+  ;; VS Code events, remember to keep the Disposable
+
+  (def the-disposable
+    (vscode/workspace.onDidOpenTextDocument
+     (fn [doc]
+       (vscode/window.showInformationMessage
+        (str "[Joyride example] "
+             (.-languageId doc)
+             " document opened: "
+             (.-fileName doc))
+        "OK"))))
+
+  (.dispose the-disposable)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   ;; Create a statusbar item
   (def item (vscode/window.createStatusBarItem
              vscode/StatusBarAlignment.Right
