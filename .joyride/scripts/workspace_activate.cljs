@@ -1,7 +1,6 @@
 (ns workspace-activate
   (:require
    ["vscode" :as vscode]
-   [ai-mood-selector]
    [ai-presenter.audio-playback :as audio-playback]
    ai-presenter.audio-generation
    [joyride.core :as joyride]
@@ -40,9 +39,7 @@
   (clear-disposables!)
   (push-disposable (showtime/init!))
   (next-slide/activate!)
-  (audio-playback/init-audio-service!)
-  (p/let [item (ai-mood-selector/activate-mood! "presenter")]
-    (push-disposable item)))
+  (audio-playback/init-audio-service!))
 
 (when (= (joyride/invoked-script) joyride/*file*)
   (my-main))
