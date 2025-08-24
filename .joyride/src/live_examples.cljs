@@ -250,7 +250,28 @@
                    (.padStart 2 "0"))))
 
   (color-with-alpha gold 127)
+  (map (partial color-with-alpha gold) [0 127 255])
   (set! (.-color item) (color-with-alpha gold 127))
+
+  (defn wave-alpha [alpha]
+    (let [unit-alpha (/ alpha 255)
+          cos-alpha (js/Math.cos (* js/Math.PI unit-alpha))
+          shifted (/ (+ 1 cos-alpha) 2)]
+      (* 255 shifted)))
+
+  (map wave-alpha [0  32  64  96 128 160 192 224 256 288 320])
+             ;~ [255 245 217 176 127  78  36   9   0  10  38]
+
+
+
+
+  (def !alpha (atom 0))
+  @!alpha
+  (reset! !alpha 127)
+
+
+
+
 
 
 
@@ -261,26 +282,16 @@
 
   ;; Bring <blink> back!
 
-  (defonce !alpha (atom 240))
+
 
   (defn nudge-color! []
     (let [color gold
-          alpha (* 255
-                   (/ (+ (js/Math.cos (* 2
-                                         js/Math.PI
-                                         (/ @!alpha 255)))
-                         1)
-                      2))]
-      (swap! !alpha (partial + 5))
+          alpha (wave-alpha @!alpha)]
+      (swap! !alpha (partial + 15))
       (color-with-alpha color alpha)))
 
   (nudge-color!)
-  @!alpha
-  (reset! !alpha 1)
-  (reset! !alpha 64)
-  (reset! !alpha 125)
-  (reset! !alpha 191)
-  (reset! !alpha 255)
+
 
   (defn nudge-item! []
     (set! (.-color item) (nudge-color!)))
@@ -288,7 +299,8 @@
   (nudge-item!)
 
   (defonce !interval-ids (atom []))
-  (swap! !interval-ids conj (js/setInterval nudge-item! 20))
+  (swap! !interval-ids conj (js/setInterval nudge-item! 16))
+
   (js/clearInterval (peek @!interval-ids))
   @!interval-ids
   (reset! !interval-ids [])
