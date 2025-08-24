@@ -53,12 +53,10 @@ Hooks to: The next slide, which reveals the tool (Joyride) that makes this empow
 
 ## Narration Script
 
-Welcome, everyone.
+Have you ever wished: "If only there was an extension that did exactly **this** in exactly **that** way!"?
 
-I want to ask you something. How many times have you thought: "I wish VS Code could just do this one thing differently"? Or "If only there was an extension that did exactly what I need"?
+The thing is that no one else knows your workflow like you do.
 
-The problem isn't VS Code. It's not the extensions either. The problem is that no one else knows your workflow like you do. No one else feels that tiny friction you feel every day.
+What you need is Joyride, and user space scripting.
 
-What if I told you that you don't have to wait for someone else to build what you need? What if you could just... make it happen?
-
-That's what we're here to explore. This is an invitation to join the ranks of VS Code hackers. People who don't adapt to our tools—we make our tools adapt to us.
+Become a VS Code hacker, someone who don't adapt to your tools—you make your tools adapt to you.
