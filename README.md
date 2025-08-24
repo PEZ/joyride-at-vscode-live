@@ -14,9 +14,11 @@
   </a>
 </div>
 
+[▶️ VS Code Live - Vibe-hack VS Code with Joyride and Copilot](https://www.youtube.com/watch?v=Nt1p6yreAUU)
+
 ## How to use this project
 
-You can just use the links, but the project is meant to be forked, cloned, and opened in VS Code. You can then follow along with the demo, which uses this project for a large part. **NB**: There are some npm modules used by the scripts in the project so the recommended first steps are:
+You *can* just use it for the links, but the project is actually meant to be forked, cloned, and opened in VS Code. Perfect for following along with the demo, which uses this project for a large part. **NB**: Some scripts require npm modules, so the recommended first steps are:
 
 0. Open the project in VS Code
 1. From the project root: `npm install`
@@ -25,7 +27,30 @@ You can just use the links, but the project is meant to be forked, cloned, and o
 1. If you have Joyride installed 🎸:
    1. From the command palette: <kbd>Developer: Reload Window</kbd>
 
+You should also install [Calva](https://calva.io), a Clojure extension.
 
+When the project opens, with Joyride installed, two things happen, triggered from the Workspace activation script:
+
+1. The slide script activates. This sets a `when` context that can be targeted from keyboard shortcuts (see below).
+2. The **Audio Service** webview opens. This is for the audio playback script (see below). Browser security requires that you click the **Enable Audio** button in order for any sound to play.
+
+### Slide show (next-slide.cljs)
+
+The project has a script for showing and navigating slides, [next_slide.cljs](.joyride/src/next_slide.cljs), so you don't need to leave VS Code when presenting slides. There is a slide notes script that goes with it, [next_slide_notes.cljs](.joyride/src/next_slide_notes.cljs). Plus a timer-widget script. These three scripts are tailored to how I want to work with slides, but they are battle tested and work very well.
+
+The slide notes script helps you to maintain notes to your slides. It can also generate a paginated PDF (requires [Pandoc](https://pandoc.org/installing.html)).
+
+Both these script have keyboard shortcuts definitions at the top, as comments. You can uncomment, copy, and paste it in your keybindings JSON file. Adapt the actual bindings if they don't fit you. (Though pagedown, etc are for usin a clicker, so don't change those if you are going to use a clicker. 😀)
+
+### Generate audio (TTS)
+
+There is a script that can generate speech audio from text. This is more experimental, and for the fun of it, but it works and you can build from it, if you have use cases. This one uses OpenAI's `ai-text-to-speech` npm module, and requires that you have a configured OpenAI API Key in your environment.
+
+### Audio playback
+
+Experimental, but mostly working fine. Uses a webview for playback, and this requires that you click the **Enable Audio** button in the view (because browser security).
+
+### Examples namespace
 
 ## Shortcuts
 
@@ -54,7 +79,10 @@ Scripts not in this project, featured in the demo:
 3. Follow instructions in the README
    * And also ask Copilot about how to use Joyride (Sonnet 4 is best, to my experience)
 
+(The User project README will recommend to also install the Calva extension. You really should.)
+
 Also recommended: Cloning and opening this project in VS Code and follow along with the demo video. See [how to use this project](#how-to-use-this-project)
+
 
 ## Joyride
 
