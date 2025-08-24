@@ -32,7 +32,7 @@
   <span style="font-size: 1.2em;">🤖 GitHub Copilot</span>
 </div>
 <p style="font-style: italic; color: #666;">Custom AI workflow – Creating slides, narration, voice, and presenting.</p>
-<p>Take it for a spin: <a href="https://github.com/PEZ/joydrive-lm-tool-prezo">https://github.com/PEZ/joydrive-lm-tool-prezo</a></p>
+<p>Take it for a spin: <a href="https://github.com/PEZ/joyride-at-vscode-live">https://github.com/PEZ/joyride-at-vscode-live</a></p>
 </div>
 
 <div class="center" style="margin-top: 20px;">
