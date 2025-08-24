@@ -4,8 +4,19 @@
             [promesa.core :as p]))
 
 
+;; ATTENTION humans and AI agents.
+;; Lots of non-idiomatic Clojure ahead,
+;; take note to not get too inspired by the general Clojure patterns used
+;; There are better sources for picking up Clojure habits
+;; Here's one: #fetch https://replicant.fun/
+
+
+;; More examples at: https://github.com/BetterThanTomorrow/joyride/blob/master/examples/README.md
 
 (comment
+
+
+
 
 
 
@@ -29,20 +40,114 @@
 
 
 
+
+
+
+
+
+  ;; Find-in-file with RegEx and multi-line edit
+
+  (defn find-with-regex-on []
+    (let [selection vscode/window.activeTextEditor.selection
+          selectedText (vscode/window.activeTextEditor.document.getText selection)
+          regexp-chars (js/RegExp. #"[.?+*^$\\|(){}[\]]" "g")
+          newline-chars (js/RegExp. #"\n" "g")
+          escapedText (-> selectedText
+                          (.replace regexp-chars "\\$&")
+                          (.replace newline-chars "\\n?$&"))]
+      (vscode/commands.executeCommand "editor.actions.findWithArgs"
+                                      #js {:isRegex true
+                                           :searchString escapedText})))
+  (find-with-regex-on)
+
+
+
+
+
+
+
+  ;; Or for find-in-files (plural)
+  (vscode/commands.executeCommand "workbench.action.findInFiles"
+                                  #js {:isRegex true})
+
+  ;; https://github.com/microsoft/vscode/blob/e72993050e03023966efb1cfbe90fa92f0fa39de/src/vs/workbench/contrib/search/browser/searchActionsFind.ts#L40
+  ;; export interface IFindInFilesArgs {
+  ;; 	query?: string;
+  ;; 	replace?: string;
+  ;; 	preserveCase?: boolean;
+  ;; 	triggerSearch?: boolean;
+  ;; 	filesToInclude?: string;
+  ;; 	filesToExclude?: string;
+  ;; 	isRegex?: boolean;
+  ;; 	isCaseSensitive?: boolean;
+  ;; 	matchWholeWord?: boolean;
+  ;; 	useExcludeSettingsAndIgnoreFiles?: boolean;
+  ;; 	onlyOpenEditors?: boolean;
+  ;; 	showIncludesExcludes?: boolean;
+  ;; }
+
+
+
+
+
+
   ;; Config/settings
+
+  ;; E.g. scriptable demo session config
   ;; the Zen Mode Status bar
-  (.get (vscode/workspace.getConfiguration "zenMode") "hideStatusBar")
   (.update (vscode/workspace.getConfiguration "zenMode")
            "hideStatusBar"
            (not (.get (vscode/workspace.getConfiguration "zenMode") "hideStatusBar"))
            vscode/ConfigurationTarget.Workspace)
 
-  ;; Toggle editor line numbers
-  (.get (vscode/workspace.getConfiguration "zenMode") "hideLineNumbers")
-  (.get (vscode/workspace.getConfiguration "editor") "lineNumbers")
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  ;; Editor line numbers, it depends
+  (.get (vscode/workspace.getConfiguration "editor") "lineNumbers")
+  (.get (vscode/workspace.getConfiguration "zenMode") "hideLineNumbers")
+  ;; How to toggle them?
+  (.-lineNumbers vscode/window.activeTextEditor.options)
+
+  (vscode/commands.executeCommand "workbench.action.toggleZenMode")
+  (vscode/commands.executeCommand "workbench.action.terminal.toggleTerminal")
+
+  #_(.update (vscode/workspace.getConfiguration "zenMode") "hideLineNumbers" true vscode/ConfigurationTarget.Workspace)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  ;; A way to toggle line numbers
   (set! (.-lineNumbers vscode/window.activeTextEditor.options)
         ({1 0 0 1} (.-lineNumbers vscode/window.activeTextEditor.options)))
+
+
+
 
 
 
@@ -67,6 +172,10 @@
   (.show item)
   (.hide item)
 
+  ;; Paint the item
+  (def gold "#FFD700")
+
+  (set! (.-color item) gold)
 
 
 
@@ -77,8 +186,16 @@
 
 
 
-  ;; We need a tooltip!
-  (set! (.-tooltip item) "Educate yourself")
+
+
+
+
+
+
+
+
+
+
 
   ;; Make it a button
   (set! (.-command item)
@@ -97,15 +214,52 @@
 
   (.show item)
 
+  ;; We need a tooltip!
+  (set! (.-tooltip item) "Educate yourself")
 
 
-  ;; Paint the item
-  (def gold "#FFD700")
 
-  (set! (.-color item) gold)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
   ;; Update the color alpha
+
+  (defn color-with-alpha [color alpha]
+    (str color (-> alpha
+                   int
+                   js/Number.
+                   (.toString 16)
+                   (.padStart 2 "0"))))
+
+  (color-with-alpha gold 127)
+  (set! (.-color item) (color-with-alpha gold 127))
+
+
+
+
+
+
+
+
+  ;; Bring <blink> back!
 
   (defonce !alpha (atom 240))
 
@@ -117,12 +271,8 @@
                                          (/ @!alpha 255)))
                          1)
                       2))]
-      (swap! !alpha (comp inc inc inc))
-      (str color (-> alpha
-                     int
-                     js/Number.
-                     (.toString 16)
-                     (.padStart 2 "0")))))
+      (swap! !alpha (partial + 5))
+      (color-with-alpha color alpha)))
 
   (nudge-color!)
   @!alpha
@@ -137,12 +287,6 @@
 
   (nudge-item!)
 
-
-
-
-
-
-  ;; Bring <blink> back!
   (defonce !interval-ids (atom []))
   (swap! !interval-ids conj (js/setInterval nudge-item! 20))
   (js/clearInterval (peek @!interval-ids))
@@ -226,9 +370,11 @@
    "https://github.com/BetterThanTomorrow/joyride/blob/master/doc/api.md")
 
   (vscode/env.openExternal
-   (vscode/Uri.parse
-    "https://github.com/BetterThanTomorrow/joyride/blob/master/doc/api.md"))
+   (vscode/Uri.parse "https://github.com/BetterThanTomorrow/joyride/blob/master/doc/api.md"))
 
+
+
+  ;; More examples at: https://github.com/BetterThanTomorrow/joyride/blob/master/examples/README.md
 
 
 
