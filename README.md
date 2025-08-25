@@ -1,6 +1,6 @@
 # VS Code Live Joyride demo
 
-[Joyride](https://marketplace.visualstudio.com/items?itemName=betterthantomorrow.joyride) is a [VS Code](https://code.visualstudio.com/) extension that lets you customize and automate your VS Code experience. In user space (Emacs style). Joyride's Language Model tools enable Copilot to hack VS Code with you, or even for you.
+[Joyride](https://marketplace.visualstudio.com/items?itemName=betterthantomorrow.joyride) is a [VS Code](https://code.visualstudio.com/) extension that lets you customize and automate your VS Code experience. In user space (Emacs style). Joyride's Language Model tools enable Copilot to hack VS Code with you, or even for you. Joyride is open source and free to use.
 
 <div style="position: relative; display: inline-block;">
   <a href="https://www.youtube.com/watch?v=Nt1p6yreAUU">
@@ -18,41 +18,42 @@
 
 ## How to use this project
 
-You *can* just use it for the links, but the project is actually meant to be forked, cloned, and opened in VS Code. Perfect for following along with the demo, which uses this project for a large part.
+You *can* just use it for the links, but the project is meant to be forked, cloned, and opened in VS Code. Perfect for following along with the demo, which uses this project for a large part.
 
-Then there are two general modes in which to explore the project:
+Assuming you are chosing the fun path, there are two general modes in which to explore the project:
 
 1. **Copilot at the REPL**. Copilot doing the interactive programming, the inspecting and modifications of the system as it is running. Only Joyride needed.
 2. **You + Copilot sharing the REPL**. It's how I demo things in that stream. For this you'll need [Calva](https://calva.io) in addition to Joyride.
 
-A general smart thing to do, once you have Joyride  installed, is to see Copilot as a guide and ask it about things.
+Regardless which way, a general smart thing to do, once you have Joyride  installed, is to see Copilot as a guide and ask it about things.
 
-**NB**: Some scripts require npm modules, so the recommended first steps are:
+**NB**: Some scripts require modules from npm, so the recommended first steps are:
 
 0. Open the project in VS Code
 1. From the project root: `npm install`
 1. If you don't have Joyride installed:
-   1. From the Extension pane: **Install Joyride**
+   1. From the Extension pane: **Install Joyride** 🎸
 1. If you have Joyride installed 🎸:
    1. From the command palette: <kbd>Developer: Reload Window</kbd>
 1. I think you should also install [Calva](https://calva.io), a Clojure extension.
 
-When the project opens, with Joyride installed, two things happen, triggered from [the Workspace activation script](.joyride/scripts/workspace_activate.cljs):
+When the project opens with Joyride installed, three things happen, triggered from [the Workspace activation script](.joyride/scripts/workspace_activate.cljs):
 
 1. The slide script activates. This sets a `when` context that can be targeted from keyboard shortcuts (see below).
 2. The **Audio Service** webview opens. This is for the audio playback script (see below). Browser security requires that you click the **Enable Audio** button in order for any sound to play.
+3. This README opens in preview mode.
 
 ### Examples namespace (live_examples.cljs)
 
 Explore the code in [live_examples.cljs](.joyride/src/live_examples.cljs) by experimenting with it, evaluating things in there, and edit things in there.
 
-In Clojure code you need to define things in order. So when function `C` needs variable `A` and function `B`, you need to evaluate `A` and `B` before evaluating `C`. Some blocks in the example file have interdependencies like this. The code is laid out in order, so when you see errors like `Could not resolve symbol: C`, it is quite possible that you have just missed to evaluate a thing from a bit earlier in the file (`A` or `B` in this case).
+In Clojure you need to define things in order. So when function `C` needs variable `A` and function `B`, you need to evaluate `A` and `B` before evaluating `C`. Some blocks in the example file have interdependencies like this. The code is laid out in order, so when you see errors like `Could not resolve symbol: C`, it is quite possible that you have just missed to evaluate a thing from a bit earlier in the file (`A` or `B` in this case).
 
 Example workflow (depends on the mode of exploration you are using):
 
 #### Copilot at the REPL
 
-Scroll through the examples namespace file and point Copilot at things in it, and ask it to evaluate/run things for you. Ask it to explain things. If it seems to be speculating, tell it to prove it using the REPL.
+Scroll through the examples namespace file and point Copilot at things in it, and ask it to evaluate/run them for you. Ask it to explain things. If Copilot seems to be speculating, tell it to prove it using the REPL. The REPL is the ultimate reality check for AI and humans alike.
 
 #### You + Copilot sharing the REPL
 
@@ -63,40 +64,42 @@ You need Calva and you need the editor to be connected to the Joyride REPL.
 
 Now you and Copilot both can evaluate and run the things in the example namespace.
 
-Well, you also need to know some Calva basics:
+Well, you also need to know some Calva basics. I will try to remember to show these basics in the stream, but let's include here as well:
 
-1. To evaluate a piece of code
+1. To evaluate a piece of code:
    1. Place your cursor in it and then:
    1. <kbd>Calva: Evaluate Top Level Form</kbd> (<kbd>alt/option+enter</kbd>)
    * You'll see what **Top Level Form** means after a few uses.
-2. To evaluate a more targeted piece of code, a sub-expression
+2. To evaluate a more targeted piece of code, a sub-expression:
    1. Place your cursor adjacent to it (just outside the opening or closing paren/bracket)
    1. <kbd>Calva: Evaluate Current Form</kbd>
-3. The <kbd>Calva: Expand Selection</kbd> command. To quickly select complete expressions, and get an intuition for what will be evaluated as the **Current Form**.
+3. To quickly select complete expressions:
+   * <kbd>Calva: Expand Selection</kbd> command.
+   * Do it often to gain an intuition for what will be evaluated as the **Current Form**.
 
 ### Slide show script (next_slide.cljs)
 
-The project has a script/system for showing and navigating slides, [next_slide.cljs](.joyride/src/next_slide.cljs), so you don't need to leave VS Code when presenting slides. There is a slide notes script that goes with it, [next_slide_notes.cljs](.joyride/src/next_slide_notes.cljs). Plus a timer-widget script. These three scripts are tailored to how I want to work with slides, but they are battle tested and work very well.
+The project has a script/system for showing and navigating slides, [next_slide.cljs](.joyride/src/next_slide.cljs), so you don't need to leave VS Code when presenting slides. There is a slide notes script that goes with it, [next_slide_notes.cljs](.joyride/src/next_slide_notes.cljs). Plus a timer-widget script, [showtime.cljs](.joyride/src/showtime.cljs). These three scripts are tested in battle and work very well, but they are tailored to how I want to work with slides. Make them your own by tailoring them to your presentation style.
 
-The slide notes script helps you to maintain notes to your slides. It can also generate a paginated PDF (requires [Pandoc](https://pandoc.org/installing.html)).
+The slide notes script helps you to maintain notes for your slides. It can also generate a paginated PDF (requires [Pandoc](https://pandoc.org/installing.html)).
 
-Both these scripts have keyboard shortcuts definitions at the top, as comments. You can uncomment, copy, and paste it in your keybindings JSON file. Adapt the actual bindings if they don't fit you. (Though `pagedown`, etc are for using a clicker, so don't change those if you are going to use a clicker. 😀)
+Both these scripts have keyboard shortcuts definitions at the top, as comments. Uncomment, copy, and paste it in your keybindings JSON file. Adapt the actual bindings if they don't fit you. (Though `pagedown`, etc are for using a clicker, so don't change those if you are going to use a clicker. 😀)
 
 The slideshow scripts depend on some other files:
-* `next-slide.css` (this is configured in the Workspace settings)
-* `slides.edn` this is the slide deck index. Place relative paths to the active slides in the `:slides` vector, in the order you want them to be navigated.
-* `slides/<something>.md` the slides. Copilot knows a bit about how to make them, especially if you use the `slide-creator` custom chat mode. (It is, in fact, Copilot that has created the ones in the current slide deck, including the cheesy narration.)
+* [next-slide.css](next-slide.css) (this is configured in the Workspace settings)
+* [slides.edn](slides.edn) this is the slide deck index. Place relative paths to the active slides in the `:slides` vector, in the order you want them to be navigated.
+* [slides/](slides/)`<something>.md` the slides. Copilot knows a bit about how to make them, especially if you use the `slide-creator` custom chat mode. (It is, in fact, Copilot that has created the ones in the current slide deck, including the cheesy narration.)
 * `slides/<something>-notes.md` the slide notes for each slide.
 
-To have the slideshow scripts and functionality available globally in VS Code, run the <kbd>Joyride: Open User Joyride Directory in New Window</kbd> command and copy the scripts over there.
+To have the slideshow scripts and functionality available globally in VS Code, run the <kbd>Joyride: Open User Joyride Directory in New Window</kbd> command, and copy the scripts over there.
 
 ### Generate audio (TTS)
 
-There is a script that can generate speech audio from text. This is more experimental, and for the fun of it, but it works and you can build from it, if you have use cases. This one uses OpenAI's `ai-text-to-speech` npm module, and requires that you have a configured OpenAI API Key in your environment.
+There is a script that can generate speech audio from text. This is more experimental, and for the fun of it, but it works and you can build from it, if you have use cases. This one uses OpenAI's TTS API, via the  [ai-text-to-speech](https://www.npmjs.com/package/ai-text-to-speech) npm module. It requires that you have a configured OpenAI API Key in your environment.
 
 ### Audio playback
 
-Experimental, but mostly working fine. Uses a webview for playback, and this requires that you click the **Enable Audio** button in the view (because browser security).
+Experimental, but mostly working fine. It uses a webview for playback, and this requires that you click the **Enable Audio** button in the view (because browser security).
 
 ## Shortcuts
 
@@ -136,18 +139,22 @@ Also recommended: Cloning and opening this project in VS Code and follow along w
 * [github.com/BetterThanTomorrow/joyride](https://github.com/BetterThanTomorrow/joyride)
   * [Joyride API](https://github.com/BetterThanTomorrow/joyride/blob/master/doc/api.md)
   * [Examples](https://github.com/BetterThanTomorrow/joyride/tree/master/examples)
-* [Playlist on CalvaTV (YouTube)](https://www.youtube.com/playlist?list=PLPb7X_9OOo7otHhDdSWnh_G9B531whMRx)
+* [Joyride Playlist on CalvaTV](https://www.youtube.com/playlist?list=PLPb7X_9OOo7otHhDdSWnh_G9B531whMRx) (YouTube)
 * Slack: Join [Clojurians slack](http://clojurians.net), and `#joyride`
+
+### Who provides Joyride?
 
 Joyride was created by Peter Strömberg and Michiel Borkent (a.k.a. PEZ and Borkdude). We are two tool smiths embedded in the [Clojure](https://clojure.org/) community.
 
 Peter mainly serves VS Code users, with [Calva](https://calva.io), and Joyride, for which I am the maintainer.
 * Github: [@PEZ](https://github.com/PEZ)
+  * [Sponsor PEZ](https://github.com/sponsors/PEZ) ♥️
 * X: [@pappapez](https://twitter.com/pappapez)
 * LinkedIn: [Peter Strömberg](https://www.linkedin.com/in/cospaia)
 
 Michiel makes foundational tools for the Clojure community at large. Like [Babashka](https://babashka.org). And [SCI](https://github.com/babashka/sci), the Small Clojure Interpreter, which powers both Babashka and Joyride.
 * Github: [@borkdude](https://github.com/borkdude)
+  * [Sponsor borkdude](https://github.com/sponsors/borkdude) ♥️
 * X: [@borkdude](https://twitter.com/borkdude)
 * LinkedIn: [Michiel Borkent](https://www.linkedin.com/in/michielborkent)
 

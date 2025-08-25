@@ -39,7 +39,10 @@
   (clear-disposables!)
   (push-disposable (showtime/init!))
   (next-slide/activate!)
-  (audio-playback/init-audio-service!))
+  (audio-playback/init-audio-service!)
+  (p/let [workspace-folder (first vscode/workspace.workspaceFolders)
+          readme-path (vscode/Uri.joinPath (.-uri workspace-folder) "/README.md")]
+    (vscode/commands.executeCommand "markdown.showPreview" readme-path)))
 
 (when (= (joyride/invoked-script) joyride/*file*)
   (my-main))
