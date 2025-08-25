@@ -214,7 +214,7 @@
 
 
 
-  ;; Create a statusbar item
+  ;; Create a statusbar item, keeping a reference
   (def item (vscode/window.createStatusBarItem
              vscode/StatusBarAlignment.Right
              1000))
@@ -459,6 +459,23 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  (require 'next-slide)
+
+  (next-slide/current!)
 
 
 
