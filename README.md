@@ -82,6 +82,14 @@ The slide notes script helps you to maintain notes to your slides. It can also g
 
 Both these scripts have keyboard shortcuts definitions at the top, as comments. You can uncomment, copy, and paste it in your keybindings JSON file. Adapt the actual bindings if they don't fit you. (Though `pagedown`, etc are for using a clicker, so don't change those if you are going to use a clicker. 😀)
 
+The slideshow scripts depend on some other files:
+* `next-slide.css` (this is configured in the Workspace settings)
+* `slides.edn` this is the slide deck index. Place relative paths to the active slides in the `:slides` vector, in the order you want them to be navigated.
+* `slides/<something>.md` the slides. Copilot knows a bit about how to make them, especially if you use the `slide-creator` custom chat mode. (It is, in fact, Copilot that has created the ones in the current slide deck, including the cheesy narration.)
+* `slides/<something>-notes.md` the slide notes for each slide.
+
+To have the slideshow scripts and functionality available globally in VS Code, run the <kbd>Joyride: Open User Joyride Directory in New Window</kbd> command and copy the scripts over there.
+
 ### Generate audio (TTS)
 
 There is a script that can generate speech audio from text. This is more experimental, and for the fun of it, but it works and you can build from it, if you have use cases. This one uses OpenAI's `ai-text-to-speech` npm module, and requires that you have a configured OpenAI API Key in your environment.
