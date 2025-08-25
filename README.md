@@ -18,29 +18,69 @@
 
 ## How to use this project
 
-You *can* just use it for the links, but the project is actually meant to be forked, cloned, and opened in VS Code. Perfect for following along with the demo, which uses this project for a large part. **NB**: Some scripts require npm modules, so the recommended first steps are:
+You *can* just use it for the links, but the project is actually meant to be forked, cloned, and opened in VS Code. Perfect for following along with the demo, which uses this project for a large part.
+
+Then there are two general modes in which to explore the project:
+
+1. **Copilot at the REPL**. Copilot doing the interactive programming, the inspecting and modifications of the system as it is running. Only Joyride needed.
+2. **You + Copilot sharing the REPL**. It's how I demo things in that stream. For this you'll need [Calva](https://calva.io) in addition to Joyride.
+
+A general smart thing to do, once you have Joyride  installed, is to see Copilot as a guide and ask it about things.
+
+**NB**: Some scripts require npm modules, so the recommended first steps are:
 
 0. Open the project in VS Code
 1. From the project root: `npm install`
 1. If you don't have Joyride installed:
-   1. From the Extension pane: Install Joyride
+   1. From the Extension pane: **Install Joyride**
 1. If you have Joyride installed 🎸:
    1. From the command palette: <kbd>Developer: Reload Window</kbd>
+1. I think you should also install [Calva](https://calva.io), a Clojure extension.
 
-You should also install [Calva](https://calva.io), a Clojure extension.
-
-When the project opens, with Joyride installed, two things happen, triggered from the Workspace activation script:
+When the project opens, with Joyride installed, two things happen, triggered from [the Workspace activation script](.joyride/scripts/workspace_activate.cljs):
 
 1. The slide script activates. This sets a `when` context that can be targeted from keyboard shortcuts (see below).
 2. The **Audio Service** webview opens. This is for the audio playback script (see below). Browser security requires that you click the **Enable Audio** button in order for any sound to play.
 
-### Slide show (next-slide.cljs)
+### Examples namespace (live_examples.cljs)
 
-The project has a script for showing and navigating slides, [next_slide.cljs](.joyride/src/next_slide.cljs), so you don't need to leave VS Code when presenting slides. There is a slide notes script that goes with it, [next_slide_notes.cljs](.joyride/src/next_slide_notes.cljs). Plus a timer-widget script. These three scripts are tailored to how I want to work with slides, but they are battle tested and work very well.
+Explore the code in [live_examples.cljs](.joyride/src/live_examples.cljs) by experimenting with it, evaluating things in there, and edit things in there.
+
+In Clojure code you need to define things in order. So when function `C` needs variable `A` and function `B`, you need to evaluate `A` and `B` before evaluating `C`. Some blocks in the example file have interdependencies like this. The code is laid out in order, so when you see errors like `Could not resolve symbol: C`, it is quite possible that you have just missed to evaluate a thing from a bit earlier in the file (`A` or `B` in this case).
+
+Example workflow (depends on the mode of exploration you are using):
+
+#### Copilot at the REPL
+
+Scroll through the examples namespace file and point Copilot at things in it, and ask it to evaluate/run things for you. Ask it to explain things. If it seems to be speculating, tell it to prove it using the REPL.
+
+#### You + Copilot sharing the REPL
+
+You need Calva and you need the editor to be connected to the Joyride REPL.
+
+0. From the Extensions pane: **Install Calva**
+1. From the command palette: <kbd>Calva: Start Joyride REPL and Connect</kbd>
+
+Now you and Copilot both can evaluate and run the things in the example namespace.
+
+Well, you also need to know some Calva basics:
+
+1. To evaluate a piece of code
+   1. Place your cursor in it and then:
+   1. <kbd>Calva: Evaluate Top Level Form</kbd> (<kbd>alt/option+enter</kbd>)
+   * You'll see what **Top Level Form** means after a few uses.
+2. To evaluate a more targeted piece of code, a sub-expression
+   1. Place your cursor adjacent to it (just outside the opening or closing paren/bracket)
+   1. <kbd>Calva: Evaluate Current Form</kbd>
+3. The <kbd>Calva: Expand Selection</kbd> command. To quickly select complete expressions, and get an intuition for what will be evaluated as the **Current Form**.
+
+### Slide show script (next_slide.cljs)
+
+The project has a script/system for showing and navigating slides, [next_slide.cljs](.joyride/src/next_slide.cljs), so you don't need to leave VS Code when presenting slides. There is a slide notes script that goes with it, [next_slide_notes.cljs](.joyride/src/next_slide_notes.cljs). Plus a timer-widget script. These three scripts are tailored to how I want to work with slides, but they are battle tested and work very well.
 
 The slide notes script helps you to maintain notes to your slides. It can also generate a paginated PDF (requires [Pandoc](https://pandoc.org/installing.html)).
 
-Both these scripts have keyboard shortcuts definitions at the top, as comments. You can uncomment, copy, and paste it in your keybindings JSON file. Adapt the actual bindings if they don't fit you. (Though pagedown, etc are for using a clicker, so don't change those if you are going to use a clicker. 😀)
+Both these scripts have keyboard shortcuts definitions at the top, as comments. You can uncomment, copy, and paste it in your keybindings JSON file. Adapt the actual bindings if they don't fit you. (Though `pagedown`, etc are for using a clicker, so don't change those if you are going to use a clicker. 😀)
 
 ### Generate audio (TTS)
 
@@ -49,10 +89,6 @@ There is a script that can generate speech audio from text. This is more experim
 ### Audio playback
 
 Experimental, but mostly working fine. Uses a webview for playback, and this requires that you click the **Enable Audio** button in the view (because browser security).
-
-### Examples namespace
-
-TBD
 
 ## Shortcuts
 
