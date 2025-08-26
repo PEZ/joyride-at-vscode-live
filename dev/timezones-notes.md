@@ -8,11 +8,10 @@
 
 1. **Build incrementally** - Test each function in the REPL before adding to file
 2. **Data-oriented approach** - Functions take args and return results, minimize side effects
-3. **Use Rich Comment Forms** - Persist REPL explorations as `(comment ...)` blocks in the script
+3. **Step-by-step verification** - Evaluate each sub-expression to understand behavior
 4. **Destructuring preferred with namespaced keywords** - Use `{:timezone/keys [label id]}` over manual property access for better refactoring support
-5. **Step-by-step verification** - Evaluate each sub-expression to understand behavior
-6. **No println debugging** - Prefer evaluating sub-expressions in REPL for testing
-7. **Domain-namespaced keywords** - Use `:timezone/id`, `:ui/state`, `:result/data` for better refactoring support and namespace clarity
+5. **No println debugging** - Prefer evaluating sub-expressions in REPL for testing
+6. **Domain-namespaced keywords** - Use `:timezone/id`, `:ui/state`, `:result/data` for better refactoring support and namespace clarity
 
 **Implementation workflow:**
 ```clojure
@@ -50,6 +49,8 @@
 - Single Joyride ClojureScript file: `.joyride/scripts/timezones.cljs`
 - Direct script execution through Joyride
 - Leverage JavaScript's `Intl.DateTimeFormat` for timezone conversion
+
+**When ready to create and update code files**: Then also add any exploratory code verifying functions and functionality, as Rich Comment Forms (`(comment ...)` blocks) to preserve REPL discoveries in the script.
 
 ### Timezone Configuration (Domain-Namespaced Keys)
 ```clojure
@@ -173,6 +174,28 @@
 ```
 
 ### Testing Strategy
+
+#### Human-AI Collaboration for UI Widgets
+Interactive widgets like `showInputBox` and `createQuickPick` require human interaction for proper testing:
+
+1. **Tell human** - "About to show input dialog for testing"
+2. **Evaluate in REPL** - Use `awaitResult: true` to wait for user interaction
+3. **Human responds** - User interacts with the widget (types, selects, clicks)
+4. **Confirm result** - Agent processes and confirms what was submitted
+
+**Essential REPL pattern for UI testing:**
+```clojure
+;; Use awaitResult: true for user interactions
+(vscode/window.showInputBox #js {:prompt "Test prompt"})
+;; Agent waits, human responds, agent gets actual result
+
+(vscode/window.showQuickPick #js ["Option 1" "Option 2"])
+;; Agent waits, human selects, agent gets selection
+```
+
+**Before implementing**: Read `joyride_basics_for_agents` and `joyride_assisting_users_guide` tools to learn Joyride evaluation capabilities and user assistance patterns, then use human-AI collaboration testing to understand widget behavior.
+
+#### REPL-Driven Development Testing
 - **REPL-Driven Development**: Use Rich comment forms to persist tests and exploration in the script
 - **Interactive Development**: Test each function incrementally in the REPL before adding to file
 - **Verified API Calls**: All VS Code API usage has been tested in the REPL:
