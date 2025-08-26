@@ -22,7 +22,7 @@ If the narration script is missing, please don't wing it. Instead tell the user 
 (ai-presenter.audio-generation/generate-slide-audio!+ slide-name script)
 ```
 
-NB: The human can't see what you evaluate. Remember to prepend the evaluation with a code block containg what you evaluate.
+NB: Remember that the human does not see what you evaluate with the tool. You need to prepend the tool use with a code block containg the code being evaluated. The user does not see the result of the evaluation either. You can mention the result in a non-verbose way so that the user stays informed without being overwhelmed.
 
 ## Technical Execution
 
