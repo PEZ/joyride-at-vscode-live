@@ -43,6 +43,55 @@ When the project opens with Joyride installed, three things happen, triggered fr
 2. The **Audio Service** webview opens. This is for the audio playback script (see below). Browser security requires that you click the **Enable Audio** button in order for any sound to play.
 3. This README opens in preview mode.
 
+### Create the timezones listing script
+
+**Timezones Listing** is a Joyride script that will let you convert a time (say for an event). Then create a list of that time in some major timezones around the globe, offering you to copy a specific time, or all of them to the clipboard.
+
+![Timezones List menu](tz-list.png)
+
+It's super for people who don't like to leave VS Code for getting some timezone convertion done.
+
+_The problem is that the script does not exist yet._ But Copilot can create it for you. You can use my process or just the plan produced by it. Here's what I did:
+
+I used this prompt (and Sonnet 4 in plain Agent mode):
+
+```
+/first-ask-joy i want to create a script that
+converts a time to some timezones, i'm
+thinking quick-input for the input time and a
+quick-pick menu for the different times in the
+timezones, and the menu offers ways to copy
+individual times as well as all of them to the
+clipboard. Can you create an Amazon Working
+Backwards style press release in the docs/ sub
+directory, so that we can use it to calibrate
+our understanding of the idea and task?
+```
+
+([Learn more about Amazon's Working Backwards methodology](https://www.productplan.com/glossary/working-backward-amazon-method/))
+
+And after some back-and-forth, Copilot produced this press release (and I had to stop it from rushing ahead and implement the script.):
+
+* [TZ Press Release](dev/timezones-press-release.md)
+
+The press-release had some of Claude Sonnet enthuisastic extras, and some misunderstandings, so it was a great tool for calibrating and clarfífying the idea.
+
+I then took the press release and asked Copilot to create implementation notes for. Again with the `/first-ask-joy` prompt, available in this project. The result (after some considerable back-and-forth):
+
+* [TZ implementation notes](dev/timezones-implementation-notes.md)
+
+Now you can create the **Timezones List** script and give your VS Code the nifty powers by:
+1. Opening Copilot chat
+2. Select **Agent** mode and **Claude Sonnet 4**
+3. Add the two files to the context
+4. Ask: _Please implement the timezone.cljs script for me._
+
+When the script is done you can run it using the command palette: <kbd>Joyride: Run Workspace Script...</kbd>, and then select `timezones.cljs`. (You will probably want to move it to your **User** scripts later.)
+
+Ask Copilot how to configure the choice of timezones.
+
+An improvment you can add after the script is done is to make it show each timezone time in the locale of the city used to denote the timezone.
+
 ### Examples namespace (live_examples.cljs)
 
 Explore the code in [live_examples.cljs](.joyride/src/live_examples.cljs) by experimenting with it, evaluating things in there, and edit things in there.

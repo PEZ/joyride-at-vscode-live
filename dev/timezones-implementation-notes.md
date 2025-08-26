@@ -67,7 +67,7 @@ For new files and plain appending of content, the built in edit tools work best.
 ```
 
 ### User Flow (REPL-Verified)
-1. ✅ User runs the user script `timezones.cljs`
+1. ✅ User runs the workspace script `timezones.cljs`
 2. ✅ `vscode/window.showInputBox` prompts with **pre-populated current time** for easy editing:
    - `value`: Current time in "2025-08-26 17:56" format (REPL-tested)
    - `prompt`: "Edit date and time, or press Enter to use current time"
