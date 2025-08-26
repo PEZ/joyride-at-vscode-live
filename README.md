@@ -156,12 +156,21 @@ Scripts/code in this project, featured in the demo:
 
 * Examples namespace: [live_examples.cljs](.joyride/src/live_examples.cljs)
 * Slide show script: [next_slide.cljs](.joyride/src/next_slide.cljs)
+* Slide notes script: [next_slide_notes.cljs](.joyride/src/next_slide_notes.cljs)
+* Timezones script: [timezones.cljs](.joyride/scripts/timezones.cljs) *(to be created by you)*
 * Audio generation (TTS): [ai_presenter/audio_generation.cljs](.joyride/src/ai_presenter/audio_generation.cljs)
 * Audio playback:
   * [ai_presenter/audio_playback.cljs](.joyride/src/ai_presenter/audio_playback.cljs)
   * [audio-service.html](.joyride/resources/audio-service.html)
 * Timer status bar item: [showtime.cljs](.joyride/src/showtime.cljs)
 * Workspace activation script: [workspace_activate.cljs](.joyride/scripts/workspace_activate.cljs)
+
+Configuration and support files:
+
+* Slide styling: [next-slide.css](next-slide.css)
+* Slide deck index: [slides.edn](slides.edn)
+* Timezones press release: [dev/timezones-press-release.md](dev/timezones-press-release.md)
+* Timezones implementation notes: [dev/timezones-implementation-notes.md](dev/timezones-implementation-notes.md)
 
 Scripts not in this project, featured in the demo:
 
