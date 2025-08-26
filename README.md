@@ -20,7 +20,7 @@
 
 You *can* just use it for the links, but the project is meant to be forked, cloned, and opened in VS Code. Perfect for following along with the demo, which uses this project for a large part.
 
-Assuming you are chosing the fun path, there are two general modes in which to explore the project:
+Assuming you are choosing the fun path, there are two general modes in which to explore the project:
 
 1. **Copilot at the REPL**. Copilot doing the interactive programming, the inspecting and modifications of the system as it is running. Only Joyride needed.
 2. **You + Copilot sharing the REPL**. It's how I demo things in that stream. For this you'll need [Calva](https://calva.io) in addition to Joyride.
@@ -49,7 +49,7 @@ When the project opens with Joyride installed, three things happen, triggered fr
 
 ![Timezones List menu](tz-list.png)
 
-It's super for people who don't like to leave VS Code for getting some timezone convertion done.
+It's super for people who don't like to leave VS Code for getting some timezone conversion done.
 
 _The problem is that the script does not exist yet._ But Copilot can create it for you. You can use my process or just the plan produced by it. Here's what I did:
 
@@ -70,13 +70,13 @@ our understanding of the idea and task?
 
 ([Learn more about Amazon's Working Backwards methodology](https://www.productplan.com/glossary/working-backward-amazon-method/))
 
-And after some back-and-forth, Copilot produced this press release (and I had to stop it from rushing ahead and implement the script.):
+And after some back-and-forth, Copilot produced this press release (and I had to stop it from rushing ahead and implementing the script):
 
 * [TZ Press Release](dev/timezones-press-release.md)
 
-The press-release had some of Claude Sonnet enthuisastic extras, and some misunderstandings, so it was a great tool for calibrating and clarfífying the idea.
+The press-release had some of Claude Sonnet's enthusiastic extras, and some misunderstandings, so it was a great tool for calibrating and clarifying the idea.
 
-I then took the press release and asked Copilot to create implementation notes for. Again with the `/first-ask-joy` prompt, available in this project. The result (after some considerable back-and-forth):
+I then took the press release and asked Copilot to create implementation notes for it. Again with the `/first-ask-joy` prompt, available in this project. The result (after some considerable back-and-forth):
 
 * [TZ implementation notes](dev/timezones-implementation-notes.md)
 
@@ -90,7 +90,7 @@ When the script is done you can run it using the command palette: <kbd>Joyride: 
 
 Ask Copilot how to configure the choice of timezones.
 
-An improvment you can add after the script is done is to make it show each timezone time in the locale of the city used to denote the timezone.
+An improvement you can add after the script is done is to make it show each timezone time in the locale of the city used to denote the timezone.
 
 ### Examples namespace (live_examples.cljs)
 
@@ -132,7 +132,7 @@ The project has a script/system for showing and navigating slides, [next_slide.c
 
 The slide notes script helps you to maintain notes for your slides. It can also generate a paginated PDF (requires [Pandoc](https://pandoc.org/installing.html)).
 
-Both these scripts have keyboard shortcuts definitions at the top, as comments. Uncomment, copy, and paste it in your keybindings JSON file. Adapt the actual bindings if they don't fit you. (Though `pagedown`, etc are for using a clicker, so don't change those if you are going to use a clicker. 😀)
+Both these scripts have keyboard shortcuts definitions at the top, as comments. Uncomment, copy, and paste them in your keybindings JSON file. Adapt the actual bindings if they don't fit you. (Though `pagedown`, etc are for using a clicker, so don't change those if you are going to use a clicker. 😀)
 
 The slideshow scripts depend on some other files:
 * [next-slide.css](next-slide.css) (this is configured in the Workspace settings)
