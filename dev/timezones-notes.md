@@ -52,6 +52,8 @@
 
 **When ready to create and update code files**: Then also add any exploratory code verifying functions and functionality, as Rich Comment Forms (`(comment ...)` blocks) to preserve REPL discoveries in the script.
 
+For new files and plain appending of content, the built in edit tools work best. Then if functions need to be edited, replace functions in full one at a time using the structural editing tools.
+
 ### Timezone Configuration (Domain-Namespaced Keys)
 ```clojure
 (def timezones
@@ -196,7 +198,6 @@ Interactive widgets like `showInputBox` and `createQuickPick` require human inte
 **Before implementing**: Read `joyride_basics_for_agents` and `joyride_assisting_users_guide` tools to learn Joyride evaluation capabilities and user assistance patterns, then use human-AI collaboration testing to understand widget behavior.
 
 #### REPL-Driven Development Testing
-- **REPL-Driven Development**: Use Rich comment forms to persist tests and exploration in the script
 - **Interactive Development**: Test each function incrementally in the REPL before adding to file
 - **Verified API Calls**: All VS Code API usage has been tested in the REPL:
   - ✅ `vscode/window.showInputBox` with placeholder and prompt
