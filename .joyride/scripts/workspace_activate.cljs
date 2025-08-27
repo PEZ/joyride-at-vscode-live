@@ -37,7 +37,7 @@
 (defn- my-main []
   (println "Hello World, from my-main workspace_activate.cljs script")
   (clear-disposables!)
-  (push-disposable (showtime/init-timer!))
+  (push-disposable (showtime/init!))
   (next-slide/activate!)
   (audio-playback/init-audio-service!)
   (p/let [workspace-folder (first vscode/workspace.workspaceFolders)
