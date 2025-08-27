@@ -2,15 +2,12 @@
   (:require [clojure.string :as string]
             ["vscode" :as vscode]))
 
-;; =============================================================================
-;; FUNCTIONAL CORE - Pure timer logic, no side effects
-;; =============================================================================
-
 ;; :timer/type can be :simple or :pausable
 ;; :simple transitions like this:
 ;;    :reset -> :running -> :stopped -> :reset
 ;; :pausable transitions like this:
 ;;    :reset -> :running -> :paused -> :running ...
+
 (def empty-timer-state
   "Base timer state structure"
   {:timer/state :reset
@@ -19,10 +16,14 @@
    :timer/session-start nil
    :timer/last-display "00:00"})
 
-(defn timer-init
-  "Initialize a fresh timer state"
-  []
-  empty-timer-state)
+(defonce !shell-state
+  (atom {:timer-state empty-timer-state
+         :status-item nil
+         :update-interval nil
+         :emoji "⏱️"}))
+
+;;;;;;;;;;
+;; Pure timer logic, no side effects
 
 (defn timer-init-with-type
   "Initialize a timer with specific type (:simple or :pausable)"
@@ -76,27 +77,27 @@
   [timer-state action now-ms]
   (let [timer-type (:timer/type timer-state)]
     (case [(:timer/state timer-state) action timer-type]
-      ;; Simple timer behavior: reset -> running -> stopped -> reset
-      [:reset :click :simple]     (timer-start timer-state now-ms)   ; reset -> running
+      ;; Simple timer behavior
+      [:reset :click :simple]     (timer-start timer-state now-ms)
       [:running :click :simple]   (let [elapsed (timer-elapsed-ms timer-state now-ms)]
                                     (assoc timer-state
                                            :timer/state :stopped
                                            :timer/accumulated-ms elapsed
-                                           :timer/session-start nil))  ; running -> stopped (preserve time)
-      [:stopped :click :simple]   (timer-reset timer-state)          ; stopped -> reset
+                                           :timer/session-start nil))
+      [:stopped :click :simple]   (timer-reset timer-state)
 
-      ;; Pausable timer behavior: reset -> running <-> paused (with separate reset)
-      [:reset :click :pausable]   (timer-start timer-state now-ms)   ; reset -> running
-      [:running :click :pausable] (timer-pause timer-state now-ms)   ; running -> paused
-      [:paused :click :pausable]  (timer-resume timer-state now-ms)  ; paused -> running
+      ;; Pausable timer behavior
+      [:reset :click :pausable]   (timer-start timer-state now-ms)
+      [:running :click :pausable] (timer-pause timer-state now-ms)
+      [:paused :click :pausable]  (timer-resume timer-state now-ms)
 
-      ;; Direct transitions (work for both types):
+      ;; Direct transitions
       [:stopped :start]   (timer-start timer-state now-ms)
       [:reset :start]     (timer-start timer-state now-ms)
       [:running :pause]   (timer-pause timer-state now-ms)
       [:paused :resume]   (timer-resume timer-state now-ms)
       [_ :reset]          (timer-reset timer-state)
-      [_ :init]           (timer-init)
+      [_ :init]           empty-timer-state
 
       ;; Default: no change
       timer-state)))
@@ -119,29 +120,47 @@
          (zero-pad sec-remainder))))
 
 (defn timer-display-text
-  "Format elapsed time for display, matching original showtime.cljs behavior"
+  "Format elapsed time for display"
   [timer-state now-ms]
   (let [elapsed-ms (timer-elapsed-ms timer-state now-ms)
         full-text (elapsed-ms->time-str elapsed-ms)]
-    ;; Match original behavior: remove only leading hour if it's 00, keep MM:SS
     (string/replace full-text #"^00:" "")))
 
-;; =============================================================================
-;; IMPERATIVE SHELL - Side effects coordination
-;; =============================================================================
+(comment ; a.k.a. A Rich Comment Form (RCF)
+  ;; Test the functional core
+  empty-timer-state
 
-(defonce !shell-state
-  (atom {:timer-state (timer-init)
-         :status-item nil
-         :update-interval nil
-         :emoji "⏱️"}))
+  ;; Test state transitions
+  (-> empty-timer-state
+      (timer-start 1000)
+      (timer-pause 4000))
+
+  ;; Test click behavior cycle
+  (let [time-base 1000
+        state1 (timer-transition empty-timer-state :click time-base)
+        state2 (timer-transition state1 :click (+ time-base 2000))
+        state3 (timer-transition state2 :click (+ time-base 5000))]
+    {:first-click state1
+     :second-click state2
+     :third-click state3})
+
+  ;; Test time formatting
+  (elapsed-ms->time-str 0)
+  (elapsed-ms->time-str 15000)
+  (elapsed-ms->time-str 65000)
+  (elapsed-ms->time-str 3661000)
+
+  :rcf)
+
+;;;;;;;;;
+;; (Side) effectful functions
 
 (defn create-timer-item!
-  "Create a VS Code status bar item for the new timer"
+  "Create a VS Code status bar item for the timer"
   []
   (let [item (vscode/window.createStatusBarItem
               vscode/StatusBarAlignment.Left
-              -999)]  ; Different priority than original (-1000)
+              -999)]
     (.show item)
     item))
 
@@ -153,10 +172,10 @@
       (let [now (js/Date.now)
             display-text (timer-display-text timer-state now)
             state-indicator (case (:timer/state timer-state)
-                             :running "▶️"
-                             :paused "⏸️"
-                             :stopped "⏹️"
-                             :reset "🔄")]
+                              :running "▶️"
+                              :paused "⏸️"
+                              :stopped "⏹️"
+                              :reset "🔄")]
         (set! (.-text status-item)
               (str emoji " " display-text " " state-indicator))))))
 
@@ -176,22 +195,21 @@
     (swap! !shell-state dissoc :update-interval)))
 
 (defn handle-timer-click!
-  "Handle click on timer status item using functional core"
+  "Handle click on timer status item"
   []
   (let [now (js/Date.now)
         current-timer-state (:timer-state @!shell-state)
         new-timer-state (timer-transition current-timer-state :click now)]
     (swap! !shell-state assoc :timer-state new-timer-state)
 
-    ;; Manage update interval based on new state
     (case (:timer/state new-timer-state)
       :running (start-update-interval!)
       (stop-update-interval!))
 
     (update-display!)))
 
-(defn init-new-timer!
-  "Initialize the new timer with status bar item and click handler"
+(defn init-timer!
+  "Initialize the timer with status bar item and click handler"
   []
   (let [item (create-timer-item!)]
     (set! (.-command item)
@@ -199,19 +217,20 @@
                     :arguments ["(showtime2/handle-timer-click!)"]}))
     (swap! !shell-state assoc
            :status-item item
-           :timer-state (timer-init))
+           :timer-state empty-timer-state)
     (update-display!)
     item))
 
-(defn cleanup-new-timer!
-  "Clean up the new timer - dispose status item and stop intervals"
+(defn cleanup-timer!
+  "Clean up the timer - dispose status item and stop intervals"
   []
   (stop-update-interval!)
   (when-let [item (:status-item @!shell-state)]
     (.dispose item))
   (swap! !shell-state assoc
          :status-item nil
-         :timer-state (timer-init)))
+         :timer-state empty-timer-state))
+
 (defn switch-timer-type!
   "Switch between simple and pausable timer types"
   [new-type]
@@ -231,48 +250,13 @@
   []
   (switch-timer-type! :simple))
 
+(comment ; a.k.a. A Rich Comment Form (RCF)
+  (init-timer!)
+  (handle-timer-click!)
+  (handle-timer-click!)
+  (cleanup-timer!)
 
-;; =============================================================================
-;; RICH COMMENT FORMS - REPL-driven development and testing
-;; =============================================================================
-
-(comment
-  ;; Test the functional core in isolation
-  (timer-init)
-
-  ;; Test state transitions
-  (-> (timer-init)
-      (timer-start 1000)
-      (timer-pause 4000))  ; Should accumulate 3000ms
-
-  ;; Test click behavior cycle
-  (let [time-base 1000
-        state1 (timer-transition (timer-init) :click time-base)         ; stopped -> start
-        state2 (timer-transition state1 :click (+ time-base 2000))      ; running -> pause
-        state3 (timer-transition state2 :click (+ time-base 5000))]     ; paused -> resume
-    {:first-click state1
-     :second-click state2
-     :third-click state3})
-
-  ;; Test time formatting
-  (elapsed-ms->time-str 0)        ; "00:00:00"
-  (elapsed-ms->time-str 15000)    ; "00:00:15"
-  (elapsed-ms->time-str 65000)    ; "00:01:05"
-  (elapsed-ms->time-str 3661000)  ; "01:01:01"
-
-  ;; Test display formatting (removes leading zeros)
-  (timer-display-text {:timer/state :running
-                       :timer/accumulated-ms 0
-                       :timer/session-start 1000} 1015000)  ; Should show "15"
-
-  ;; Demo the complete timer system
-  (init-new-timer!)           ; Initialize new timer
-  (handle-timer-click!)       ; Start timer
-  (handle-timer-click!)       ; Pause timer
-  (handle-timer-click!)       ; Resume timer
-  (cleanup-new-timer!)        ; Clean up when done
-
-  ;; Check state (avoiding circular reference serialization)
+  ;; Check state
   (let [state @!shell-state]
     {:timer-state (:timer-state state)
      :has-status-item (some? (:status-item state))
