@@ -6,9 +6,15 @@
 ;; FUNCTIONAL CORE - Pure timer logic, no side effects
 ;; =============================================================================
 
+;; :timer/type can be :simple or :pausable
+;; :simple transitions like this:
+;;    :reset -> :running -> :stopped -> :reset
+;; :pausable transitions like this:
+;;    :reset -> :running -> :paused -> :running ...
 (def empty-timer-state
   "Base timer state structure"
-  {:timer/state :stopped
+  {:timer/state :reset
+   :timer/type :simple  ; :simple or :pausable
    :timer/accumulated-ms 0
    :timer/session-start nil
    :timer/last-display "00:00"})
@@ -18,6 +24,11 @@
   []
   empty-timer-state)
 
+(defn timer-init-with-type
+  "Initialize a timer with specific type (:simple or :pausable)"
+  [timer-type]
+  (assoc empty-timer-state :timer/type timer-type))
+
 (defn timer-elapsed-ms
   "Calculate total elapsed time for a timer state at given timestamp"
   [{:timer/keys [state accumulated-ms session-start]} now-ms]
@@ -26,9 +37,9 @@
     accumulated-ms))
 
 (defn timer-start
-  "Start timer from stopped state"
+  "Start timer from stopped or reset state"
   [timer-state now-ms]
-  {:pre [(= (:timer/state timer-state) :stopped)]}
+  {:pre [(contains? #{:stopped :reset} (:timer/state timer-state))]}
   (assoc timer-state
          :timer/state :running
          :timer/session-start now-ms))
@@ -52,28 +63,43 @@
          :timer/session-start now-ms))
 
 (defn timer-reset
-  "Reset timer to initial state from any state"
-  [_timer-state]
-  (timer-init))
+  "Reset timer to reset state from any state"
+  [timer-state]
+  {:timer/state :reset
+   :timer/type (:timer/type timer-state)  ; Preserve timer type
+   :timer/accumulated-ms 0
+   :timer/session-start nil
+   :timer/last-display "00:00"})
 
 (defn timer-transition
   "Handle timer state transitions based on action and current state"
   [timer-state action now-ms]
-  (case [(:timer/state timer-state) action]
-    ;; Click behavior according to requirements:
-    [:running :click]   (timer-pause timer-state now-ms)    ; if ticking -> stop
-    [:stopped :click]   (-> timer-state timer-reset (timer-start now-ms))  ; if stopped -> reset & start
-    [:paused :click]    (timer-resume timer-state now-ms)   ; if paused -> resume
+  (let [timer-type (:timer/type timer-state)]
+    (case [(:timer/state timer-state) action timer-type]
+      ;; Simple timer behavior: reset -> running -> stopped -> reset
+      [:reset :click :simple]     (timer-start timer-state now-ms)   ; reset -> running
+      [:running :click :simple]   (let [elapsed (timer-elapsed-ms timer-state now-ms)]
+                                    (assoc timer-state
+                                           :timer/state :stopped
+                                           :timer/accumulated-ms elapsed
+                                           :timer/session-start nil))  ; running -> stopped (preserve time)
+      [:stopped :click :simple]   (timer-reset timer-state)          ; stopped -> reset
 
-    ;; Direct transitions:
-    [:stopped :start]   (timer-start timer-state now-ms)
-    [:running :pause]   (timer-pause timer-state now-ms)
-    [:paused :resume]   (timer-resume timer-state now-ms)
-    [_ :reset]          (timer-reset timer-state)
-    [_ :init]           (timer-init)
+      ;; Pausable timer behavior: reset -> running <-> paused (with separate reset)
+      [:reset :click :pausable]   (timer-start timer-state now-ms)   ; reset -> running
+      [:running :click :pausable] (timer-pause timer-state now-ms)   ; running -> paused
+      [:paused :click :pausable]  (timer-resume timer-state now-ms)  ; paused -> running
 
-    ;; Default: no change
-    timer-state))
+      ;; Direct transitions (work for both types):
+      [:stopped :start]   (timer-start timer-state now-ms)
+      [:reset :start]     (timer-start timer-state now-ms)
+      [:running :pause]   (timer-pause timer-state now-ms)
+      [:paused :resume]   (timer-resume timer-state now-ms)
+      [_ :reset]          (timer-reset timer-state)
+      [_ :init]           (timer-init)
+
+      ;; Default: no change
+      timer-state)))
 
 (defn zero-pad
   "Add leading zero if needed"
@@ -128,7 +154,8 @@
             state-indicator (case (:timer/state timer-state)
                              :running "▶️"
                              :paused "⏸️"
-                             :stopped "⏹️")]
+                             :stopped "⏹️"
+                             :reset "🔄")]
         (set! (.-text status-item)
               (str emoji " " display-text " " state-indicator))))))
 
@@ -184,6 +211,25 @@
   (swap! !shell-state assoc
          :status-item nil
          :timer-state (timer-init)))
+(defn switch-timer-type!
+  "Switch between simple and pausable timer types"
+  [new-type]
+  {:pre [(contains? #{:simple :pausable} new-type)]}
+  (swap! !shell-state update :timer-state
+         #(assoc (timer-reset %) :timer/type new-type))
+  (update-display!)
+  (str "Timer switched to " (name new-type) " mode"))
+
+(defn make-pausable-timer!
+  "Switch current timer to pausable mode"
+  []
+  (switch-timer-type! :pausable))
+
+(defn make-simple-timer!
+  "Switch current timer to simple mode"
+  []
+  (switch-timer-type! :simple))
+
 
 ;; =============================================================================
 ;; RICH COMMENT FORMS - REPL-driven development and testing
