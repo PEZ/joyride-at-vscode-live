@@ -260,21 +260,6 @@
 
     (update-display! @!state)))
 
-(defn init-timer!
-  "Initialize the timer with status bar item and click handler"
-  ([]
-   (init-timer! empty-timer-state))
-  ([state]
-   (let [item (create-timer-item!)]
-     (set! (.-command item)
-           (clj->js {:command "joyride.runCode"
-                     :arguments [(str '(showtime/handle-timer-click!))]}))
-
-     (update-display! (reset! !state (deep-merge {:app/status-item item
-                                                :app/timer empty-timer-state}
-                                                state)))
-     item)))
-
 (defn cleanup-timer!
   "Clean up the timer - dispose status item and stop intervals"
   []
@@ -284,6 +269,22 @@
   (swap! !state assoc
          :app/status-item nil
          :app/timer empty-timer-state))
+
+(defn init-timer!
+  "Initialize the timer with status bar item and click handler"
+  ([]
+   (init-timer! empty-timer-state))
+  ([state]
+   (cleanup-timer!)
+   (let [item (create-timer-item!)]
+     (set! (.-command item)
+           (clj->js {:command "joyride.runCode"
+                     :arguments [(str '(showtime/handle-timer-click!))]}))
+
+     (update-display! (reset! !state (deep-merge {:app/status-item item
+                                                  :app/timer empty-timer-state}
+                                                 state)))
+     item)))
 
 (defn merge-app-state!
   "Switch between stoppable and pausable timer types"
