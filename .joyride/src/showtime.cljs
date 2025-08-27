@@ -140,93 +140,56 @@
     (string/replace full-text #"^00:" "")))
 
 (comment ; a.k.a. A Rich Comment Form (RCF)
-  ;; Test the functional core
+  ;; Let's explore our timer step by step! 🕐
+
+  ;; Base timer structure
   empty-timer-state
 
-  ;; Test state transitions
+  ;; Basic operations
+  (timer-start empty-timer-state 1000)
+  (timer-elapsed-ms (timer-start empty-timer-state 1000) 3500)
+  (timer-pause (timer-start empty-timer-state 1000) 3500)
+
+  ;; Resume from paused
+  (let [paused {:timer/state :state/paused :timer/type :simple
+                :timer/accumulated-ms 2500 :timer/session-start nil}]
+    (timer-resume paused 5000))
+
+  ;; Reset preserves timer type
+  (timer-reset {:timer/state :state/running :timer/type :pausable
+                :timer/accumulated-ms 42000})
+
+  ;; Time formatting
+  (elapsed-ms->time-str 0)
+  (elapsed-ms->time-str 15000)
+  (elapsed-ms->time-str 65000)
+  (elapsed-ms->time-str 3661000)
+
+  ;; Display text (removes leading "00:")
+  (timer-display-text {:timer/state :state/running :timer/session-start 1000} 66000)
+
+  ;; Click transitions differ by timer type
+  (timer-transition empty-timer-state :click 1000)
+  (timer-transition (assoc empty-timer-state :timer/type :pausable) :click 1000)
+
+  ;; Direct actions
+  (timer-transition {:timer/state :state/stopped :timer/type :simple} :start 1000)
+  (timer-transition {:timer/state :state/running :timer/session-start 1000} :reset 3000)
+
+  ;; Zero padding
+  (zero-pad 5)
+  (zero-pad 12)
+
+  ;; Threading operations
   (-> empty-timer-state
       (timer-start 1000)
-      (timer-pause 4000))
-
-  ;; Test simple timer click behavior cycle
-  (let [time-base 1000
-        state1    (timer-transition empty-timer-state :click time-base)
-        state2    (timer-transition state1 :click (+ time-base 2000))
-        state3    (timer-transition state2 :click (+ time-base 5000))]
-    {:first-click  state1   ; reset -> running
-     :second-click state2  ; running -> stopped (2s elapsed)
-     :third-click  state3}) ; stopped -> reset
-
-  ;; Test pausable timer click behavior cycle
-  (let [pausable-timer (assoc empty-timer-state :timer/type :pausable)
-        time-base      1000
-        state1         (timer-transition pausable-timer :click time-base)
-        state2         (timer-transition state1 :click (+ time-base 2000))
-        state3         (timer-transition state2 :click (+ time-base 3000))]
-    {:first-click  state1   ; reset -> running
-     :second-click state2  ; running -> paused (2s accumulated)
-     :third-click  state3}) ; paused -> running (resume)
-
-  ;; Test time formatting
-  (elapsed-ms->time-str 0)      ; "00:00:00"
-  (elapsed-ms->time-str 15000)  ; "00:00:15"
-  (elapsed-ms->time-str 65000)  ; "00:01:05"
-  (elapsed-ms->time-str 3661000); "01:01:01"
-
-  ;; Test timer display text (strips leading "00:")
-  (let [test-state (assoc empty-timer-state
-                          :timer/state :state/running
-                          :timer/session-start 1000)]
-    [(timer-display-text test-state 1000)    ; "00:00"
-     (timer-display-text test-state 16000)   ; "00:15"
-     (timer-display-text test-state 66000)   ; "01:05"
-     (timer-display-text test-state 3662000)]) ; "01:01:01"
-
-  ;; Test elapsed time calculation
-  (let [running-state {:timer/state          :state/running
-                       :timer/accumulated-ms 2000
-                       :timer/session-start  5000}
-        paused-state  {:timer/state          :state/paused
-                       :timer/accumulated-ms 3000
-                       :timer/session-start  nil}]
-    {:running-elapsed (timer-elapsed-ms running-state 8000) ; 2000 + (8000-5000) = 5000
-     :paused-elapsed  (timer-elapsed-ms paused-state 8000)}) ; 3000 (no additional time)
-
-  ;; Test reset preserves timer type
-  (let [pausable-timer (assoc empty-timer-state :timer/type :pausable)]
-    (:timer/type (timer-reset pausable-timer))) ; should be :pausable
-
-  ;; BUG: Direct actions don't work! (these should work but don't)
-  (let [stopped-timer {:timer/state          :state/stopped
-                       :timer/type           :simple
-                       :timer/accumulated-ms 5000
-                       :timer/session-start  nil
-                       :timer/last-display   "00:00"}
-        running-timer {:timer/state          :state/running
-                       :timer/type           :pausable
-                       :timer/accumulated-ms 0
-                       :timer/session-start  1000
-                       :timer/last-display   "00:00"}
-        paused-timer  {:timer/state          :state/paused
-                       :timer/type           :pausable
-                       :timer/accumulated-ms 2000
-                       :timer/session-start  nil
-                       :timer/last-display   "00:00"}]
-    {:start-from-stopped (timer-transition stopped-timer :start 10000)  ; BUG: should start but doesn't
-     :start-from-reset   (timer-transition empty-timer-state :start 10000) ; BUG: should start but doesn't
-     :pause-from-running (timer-transition running-timer :pause 5000)    ; BUG: should pause but doesn't
-     :resume-from-paused (timer-transition paused-timer :resume 8000)})  ; BUG: should resume but doesn't
-
-  ;; These actions DO work (wildcards)
-  {:reset-works (timer-transition {:timer/state :state/running
-                                   :timer/type  :simple} :reset 1000)
-   :init-works  (timer-transition {:timer/state :state/running
-                                   :timer/type  :simple} :init 1000)}
+      (timer-pause 3000)
+      (timer-elapsed-ms 3000))
 
   :rcf)
 
 ;;;;;;;;;
-;; (Side) effectful functions
+;; (Side)effectful functions
 
 (defn create-timer-item!
   "Create a VS Code status bar item for the timer"
