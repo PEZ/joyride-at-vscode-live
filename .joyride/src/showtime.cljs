@@ -291,11 +291,38 @@
 
   (update-display! (swap! !state deep-merge !new-state)))
 
+;;;;;;;;;;
+;; Public API for presenter
+
+(defn start!
+  "Start the timer"
+  []
+  (swap! !state assoc-in [:app/timer :timer/state] :state/reset)
+  (let [now (js/Date.now)
+        new-timer-state (timer-transition (:app/timer @!state) :click now)]
+    (swap! !state assoc :app/timer new-timer-state)
+    (start-update-interval! @!state)
+    (update-display! @!state)
+    (:timer/state new-timer-state)))
+
+(defn stop!
+  "Stop the timer"
+  []
+  (swap! !state assoc-in [:app/timer :timer/state] :state/running)
+  (let [now (js/Date.now)
+        new-timer-state (timer-transition (:app/timer @!state) :click now)]
+    (swap! !state assoc :app/timer new-timer-state)
+    (stop-update-interval! @!state)
+    (update-display! @!state)
+    (:timer/state new-timer-state)))
+
 (comment ; a.k.a. A Rich Comment Form (RCF)
   ;; Basic timer usage
   (init-timer!)
   (handle-timer-click!)
   (handle-timer-click!)
+  (start!)
+  (stop!)
   (cleanup-timer!)
 
   ;; we can update app state on the fly
