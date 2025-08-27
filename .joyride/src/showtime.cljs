@@ -2,8 +2,8 @@
   (:require [clojure.string :as string]
             ["vscode" :as vscode]))
 
-;; :timer/type can be :timer-type/simple or :timer-type/pausable
-;; :timer-type/simple transitions like this:
+;; :timer/type can be :timer-type/stoppable or :timer-type/pausable
+;; :timer-type/stoppable transitions like this:
 ;;    :state/reset -> :state/running -> :state/stopped -> :state/reset
 ;; :timer-type/pausable transitions like this:
 ;;    :state/reset -> :state/running -> :state/paused -> :state/running ...
@@ -11,17 +11,29 @@
 (def empty-timer-state
   "Base timer state structure"
   {:timer/state :state/reset
-   :timer/type :timer-type/simple  ; :timer-type/simple or :timer-type/pausable
+   :timer/timer-type :timer-type/stoppable  ; :timer-type/stoppable or :timer-type/pausable
    :timer/accumulated-ms 0
    :timer/session-start nil
    :timer/last-display "00:00"})
 
 (defonce !state
-  (atom {:app/timer-state empty-timer-state
+  (atom {:app/timer empty-timer-state
          :app/status-item nil
          :app/update-interval nil
          :app/emoji "⏱️"
          :app/debug? false}))
+
+;;;;;;;;;;
+;; util
+
+(defn deep-merge [m1 m2]
+  (reduce (fn [acc [k v]]
+            (if (and (map? (get acc k))
+                     (map? v))
+              (assoc acc k (deep-merge (get acc k) v))
+              (assoc acc k v)))
+          m1
+          m2))
 
 ;;;;;;;;;;
 ;; Pure timer logic, no side effects
@@ -63,7 +75,7 @@
   "Reset timer to reset state from any state"
   [timer-state]
   {:timer/state :state/reset
-   :timer/type (:timer/type timer-state)  ; Preserve timer type
+   :timer/timer-type (:timer/timer-type timer-state)  ; Preserve timer type
    :timer/accumulated-ms 0
    :timer/session-start nil
    :timer/last-display "00:00"})
@@ -72,21 +84,21 @@
   "Handle timer state transitions"
   [timer-state action now-ms]
   (let [state (:timer/state timer-state)
-        timer-type (:timer/type timer-state)]
+        timer-type (:timer/timer-type timer-state)]
     (if (= action :click)
       ;; Click actions with timer-type specific behavior
       (case [state timer-type]
-        [:state/reset :timer-type/simple]
+        [:state/reset :timer-type/stoppable]
         (timer-start timer-state now-ms)
 
-        [:state/running :timer-type/simple]
+        [:state/running :timer-type/stoppable]
         (let [elapsed (timer-elapsed-ms timer-state now-ms)]
           (assoc timer-state
                  :timer/state :state/stopped
                  :timer/accumulated-ms elapsed
                  :timer/session-start nil))
 
-        [:state/stopped :timer-type/simple]
+        [:state/stopped :timer-type/stoppable]
         (timer-reset timer-state)
 
         [:state/reset :timer-type/pausable]
@@ -151,12 +163,12 @@
   (timer-pause (timer-start empty-timer-state 1000) 3500)
 
   ;; Resume from paused
-  (let [paused {:timer/state :state/paused :timer/type :timer-type/simple
+  (let [paused {:timer/state :state/paused :timer/timer-type :timer-type/stoppable
                 :timer/accumulated-ms 2500 :timer/session-start nil}]
     (timer-resume paused 5000))
 
   ;; Reset preserves timer type
-  (timer-reset {:timer/state :state/running :timer/type :timer-type/pausable
+  (timer-reset {:timer/state :state/running :timer/timer-type :timer-type/pausable
                 :timer/accumulated-ms 42000})
 
   ;; Time formatting
@@ -170,10 +182,10 @@
 
   ;; Click transitions differ by timer type
   (timer-transition empty-timer-state :click 1000)
-  (timer-transition (assoc empty-timer-state :timer/type :timer-type/pausable) :click 1000)
+  (timer-transition (assoc empty-timer-state :timer/timer-type :timer-type/pausable) :click 1000)
 
   ;; Direct actions
-  (timer-transition {:timer/state :state/stopped :timer/type :timer-type/simple} :start 1000)
+  (timer-transition {:timer/state :state/stopped :timer/timer-type :timer-type/stoppable} :start 1000)
   (timer-transition {:timer/state :state/running :timer/session-start 1000} :reset 3000)
 
   ;; Zero padding
@@ -202,13 +214,13 @@
 
 (defn update-display!
   "Update the status bar item with current timer state"
-  []
-  (let [{:app/keys [timer-state status-item emoji debug?]} @!state]
+  [state]
+  (let [{:app/keys [timer status-item emoji debug?]} state]
     (when status-item
       (let [now (js/Date.now)
-            display-text (timer-display-text timer-state now)
+            display-text (timer-display-text timer now)
             state-indicator (when debug?
-                              (case (:timer/state timer-state)
+                              (case (:timer/state timer)
                                 :state/running "▶️"
                                 :state/paused "⏸️"
                                 :state/stopped "⏹️"
@@ -216,20 +228,21 @@
             text (if debug?
                    (str emoji " " display-text " " state-indicator)
                    (str emoji " " display-text))]
-        (set! (.-text status-item) text)))))
+        (set! (.-text status-item) text)
+        state))))
 
 (defn start-update-interval!
   "Start interval for live display updates when timer is running"
-  []
-  (when-let [existing (:app/update-interval @!state)]
+  [state]
+  (when-let [existing (:app/update-interval state)]
     (js/clearInterval existing))
-  (let [interval-id (js/setInterval update-display! 100)]
+  (let [interval-id (js/setInterval #(update-display! @!state) 100)]
     (swap! !state assoc :app/update-interval interval-id)))
 
 (defn stop-update-interval!
   "Stop the display update interval"
-  []
-  (when-let [interval-id (:app/update-interval @!state)]
+  [state]
+  (when-let [interval-id (:app/update-interval state)]
     (js/clearInterval interval-id)
     (swap! !state dissoc :app/update-interval)))
 
@@ -237,53 +250,46 @@
   "Handle click on timer status item"
   []
   (let [now (js/Date.now)
-        current-timer-state (:app/timer-state @!state)
+        current-timer-state (:app/timer @!state)
         new-timer-state (timer-transition current-timer-state :click now)]
-    (swap! !state assoc :app/timer-state new-timer-state)
+    (swap! !state assoc :app/timer new-timer-state)
 
     (case (:timer/state new-timer-state)
-      :state/running (start-update-interval!)
-      (stop-update-interval!))
+      :state/running (start-update-interval! @!state)
+      (stop-update-interval! @!state))
 
-    (update-display!)))
+    (update-display! @!state)))
 
 (defn init-timer!
   "Initialize the timer with status bar item and click handler"
   ([]
-   (init-timer! {}))
-  ([{:app/keys [timer-type debug? emoji]
-     :or {timer-type :timer-type/simple debug? false}}]
-   (let [item (create-timer-item!)
-         initial-state (assoc empty-timer-state :timer/type timer-type)]
+   (init-timer! empty-timer-state))
+  ([state]
+   (let [item (create-timer-item!)]
      (set! (.-command item)
            (clj->js {:command "joyride.runCode"
                      :arguments [(str '(showtime/handle-timer-click!))]}))
-     (swap! !state assoc
-            :app/status-item item
-            :app/timer-state initial-state
-            :app/debug? debug?
-            :app/emoji emoji)
-     (update-display!)
+
+     (update-display! (reset! !state (merge {:app/status-item item
+                                           :app/timer empty-timer-state}
+                                           state)))
      item)))
 
 (defn cleanup-timer!
   "Clean up the timer - dispose status item and stop intervals"
   []
-  (stop-update-interval!)
+  (stop-update-interval! @!state)
   (when-let [item (:app/status-item @!state)]
     (.dispose item))
   (swap! !state assoc
          :app/status-item nil
-         :app/timer-state empty-timer-state))
+         :app/timer empty-timer-state))
 
-(defn switch-timer-type!
-  "Switch between simple and pausable timer types"
-  [new-type]
-  {:pre [(contains? #{:timer-type/simple :timer-type/pausable} new-type)]}
-  (swap! !state update :app/timer-state
-         #(assoc % :timer/type new-type))
-  (update-display!)
-  (str "Timer switched to " (name new-type) " mode"))
+(defn merge-app-state!
+  "Switch between stoppable and pausable timer types"
+  [!new-state]
+
+  (update-display! (swap! !state deep-merge !new-state)))
 
 (comment ; a.k.a. A Rich Comment Form (RCF)
   ;; Basic timer usage
@@ -292,24 +298,28 @@
   (handle-timer-click!)
   (cleanup-timer!)
 
-  ;; we can switch timer type on the fly
-  (switch-timer-type! :timer-type/pausable)
-  (switch-timer-type! :timer-type/simple)
+  ;; we can update app state on the fly
+  (merge-app-state! {:app/timer {:timer/timer-type
+                                 :timer-type/pausable}})
+  (merge-app-state! {:app/emoji "🎸"})
 
   ;; Different timer configurations
   (cleanup-timer!)
 
-  ;; Default: simple timer, no debug, no emoji
+  ;; Default: stoppable timer, no debug, no emoji
   (init-timer!)
 
   ;; Pausable timer with debug enabled
-  (init-timer! {:timer-type :timer-type/pausable :app/debug? true})
+  (init-timer! {:app/timer {:timer/timer-type
+                            :timer-type/pausable}
+                :app/debug? true})
 
   ;; Custom emoji with debug
   (init-timer! {:app/emoji "🕐" :app/debug? true})
 
   ;; All options
-  (init-timer! {:timer-type :timer-type/pausable
+  (init-timer! {:app/timer {:timer/timer-type
+                            :timer-type/stoppable}
                 :app/debug? true
                 :app/emoji "🔥"})
 
@@ -317,11 +327,12 @@
   (init-timer! {:app/emoji "⚽" :app/debug? false})
 
   ;; Work timer
-  (init-timer! {:app/emoji "💼" :timer-type :timer-type/pausable})
+  (init-timer! {:app/emoji "💼" :app/timer {:timer/timer-type
+                                            :timer-type/pausable}})
 
   ;; Check state
   (let [state @!state]
-    {:app/timer-state (:app/timer-state state)
+    {:app/timer (:app/timer state)
      :has-status-item (some? (:app/status-item state))
      :has-interval (some? (:app/update-interval state))
      :app/emoji (:app/emoji state)
