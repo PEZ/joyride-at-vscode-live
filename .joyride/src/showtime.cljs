@@ -270,9 +270,9 @@
            (clj->js {:command "joyride.runCode"
                      :arguments [(str '(showtime/handle-timer-click!))]}))
 
-     (update-display! (reset! !state (merge {:app/status-item item
-                                           :app/timer empty-timer-state}
-                                           state)))
+     (update-display! (reset! !state (deep-merge {:app/status-item item
+                                                :app/timer empty-timer-state}
+                                                state)))
      item)))
 
 (defn cleanup-timer!
