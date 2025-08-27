@@ -20,7 +20,8 @@
   (atom {:timer-state empty-timer-state
          :status-item nil
          :update-interval nil
-         :emoji "⏱️"}))
+         :emoji "⏱️"
+         :debug? false}))
 
 ;;;;;;;;;;
 ;; Pure timer logic, no side effects
@@ -167,17 +168,20 @@
 (defn update-display!
   "Update the status bar item with current timer state"
   []
-  (let [{:keys [timer-state status-item emoji]} @!shell-state]
+  (let [{:keys [timer-state status-item emoji debug?]} @!shell-state]
     (when status-item
       (let [now (js/Date.now)
             display-text (timer-display-text timer-state now)
-            state-indicator (case (:timer/state timer-state)
-                              :running "▶️"
-                              :paused "⏸️"
-                              :stopped "⏹️"
-                              :reset "🔄")]
-        (set! (.-text status-item)
-              (str emoji " " display-text " " state-indicator))))))
+            state-indicator (when debug?
+                              (case (:timer/state timer-state)
+                                :running "▶️"
+                                :paused "⏸️"
+                                :stopped "⏹️"
+                                :reset "🔄"))
+            text (if debug?
+                   (str emoji " " display-text " " state-indicator)
+                   (str emoji " " display-text))]
+        (set! (.-text status-item) text)))))
 
 (defn start-update-interval!
   "Start interval for live display updates when timer is running"
@@ -210,16 +214,22 @@
 
 (defn init-timer!
   "Initialize the timer with status bar item and click handler"
-  []
-  (let [item (create-timer-item!)]
-    (set! (.-command item)
-          (clj->js {:command "joyride.runCode"
-                    :arguments ["(showtime2/handle-timer-click!)"]}))
-    (swap! !shell-state assoc
-           :status-item item
-           :timer-state empty-timer-state)
-    (update-display!)
-    item))
+  ([]
+   (init-timer! {}))
+  ([{:keys [timer-type debug? emoji]
+     :or {timer-type :simple debug? false}}]
+   (let [item (create-timer-item!)
+         initial-state (assoc empty-timer-state :timer/type timer-type)]
+     (set! (.-command item)
+           (clj->js {:command "joyride.runCode"
+                     :arguments ["(showtime2/handle-timer-click!)"]}))
+     (swap! !shell-state assoc
+            :status-item item
+            :timer-state initial-state
+            :debug? debug?
+            :emoji emoji)
+     (update-display!)
+     item)))
 
 (defn cleanup-timer!
   "Clean up the timer - dispose status item and stop intervals"
@@ -251,16 +261,41 @@
   (switch-timer-type! :simple))
 
 (comment ; a.k.a. A Rich Comment Form (RCF)
+  ;; Basic timer usage
   (init-timer!)
   (handle-timer-click!)
   (handle-timer-click!)
   (cleanup-timer!)
+
+  ;; Different timer configurations
+  (cleanup-timer!)
+
+  ;; Default: simple timer, no debug, no emoji
+  (init-timer!)
+
+  ;; Pausable timer with debug enabled
+  (init-timer! {:timer-type :pausable :debug? true})
+
+  ;; Custom emoji with debug
+  (init-timer! {:emoji "🕐" :debug? true})
+
+  ;; All options
+  (init-timer! {:timer-type :pausable
+                :debug? true
+                :emoji "🔥"})
+
+  ;; Sports timer style
+  (init-timer! {:emoji "⚽" :debug? false})
+
+  ;; Work timer
+  (init-timer! {:emoji "💼" :timer-type :pausable})
 
   ;; Check state
   (let [state @!shell-state]
     {:timer-state (:timer-state state)
      :has-status-item (some? (:status-item state))
      :has-interval (some? (:update-interval state))
-     :emoji (:emoji state)})
+     :emoji (:emoji state)
+     :debug? (:debug? state)})
 
   :rcf)
