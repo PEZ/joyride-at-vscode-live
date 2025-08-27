@@ -26,11 +26,6 @@
 ;;;;;;;;;;
 ;; Pure timer logic, no side effects
 
-(defn timer-init-with-type
-  "Initialize a timer with specific type (:simple or :pausable)"
-  [timer-type]
-  (assoc empty-timer-state :timer/type timer-type))
-
 (defn timer-elapsed-ms
   "Calculate total elapsed time for a timer state at given timestamp"
   [{:timer/keys [state accumulated-ms session-start]} now-ms]
@@ -250,22 +245,16 @@
   (update-display!)
   (str "Timer switched to " (name new-type) " mode"))
 
-(defn make-pausable-timer!
-  "Switch current timer to pausable mode"
-  []
-  (switch-timer-type! :pausable))
-
-(defn make-simple-timer!
-  "Switch current timer to simple mode"
-  []
-  (switch-timer-type! :simple))
-
 (comment ; a.k.a. A Rich Comment Form (RCF)
   ;; Basic timer usage
   (init-timer!)
   (handle-timer-click!)
   (handle-timer-click!)
   (cleanup-timer!)
+
+  ;; we can switch timer type on the fly
+  (switch-timer-type! :pausable)
+  (switch-timer-type! :simpe)
 
   ;; Different timer configurations
   (cleanup-timer!)
