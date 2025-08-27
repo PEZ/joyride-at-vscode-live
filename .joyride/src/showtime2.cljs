@@ -119,11 +119,12 @@
          (zero-pad sec-remainder))))
 
 (defn timer-display-text
-  "Format elapsed time for display, removing leading zeros like the original"
+  "Format elapsed time for display, matching original showtime.cljs behavior"
   [timer-state now-ms]
   (let [elapsed-ms (timer-elapsed-ms timer-state now-ms)
         full-text (elapsed-ms->time-str elapsed-ms)]
-    (string/replace full-text #"^(00:){1,2}" "")))
+    ;; Match original behavior: remove only leading hour if it's 00, keep MM:SS
+    (string/replace full-text #"^00:" "")))
 
 ;; =============================================================================
 ;; IMPERATIVE SHELL - Side effects coordination
