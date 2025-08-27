@@ -281,7 +281,7 @@
   [new-type]
   {:pre [(contains? #{:timer-type/simple :timer-type/pausable} new-type)]}
   (swap! !state update :app/timer-state
-         #(assoc (timer-reset %) :timer/type new-type))
+         #(assoc % :timer/type new-type))
   (update-display!)
   (str "Timer switched to " (name new-type) " mode"))
 
