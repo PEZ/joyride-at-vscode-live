@@ -7,7 +7,8 @@
    [next-slide]
    [next-slide-notes]
    [promesa.core :as p]
-   [showtime]))
+   [showtime]
+   [live-examples]))
 
 (defonce !db (atom {:disposables []}))
 
