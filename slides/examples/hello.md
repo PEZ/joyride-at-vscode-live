@@ -10,10 +10,10 @@ Vibe code VS Code itself while you are using it.
 <div class="row" style="margin: 60px 0; align-items: center; justify-content: center;">
 
 <div class="col-9 center">
-<img src="images/joyride-logo.png" alt="Joyride Logo" height="120" />
+<img src="../images/joyride-logo.png" alt="Joyride Logo" height="120" />
 </div>
 <div class="col-3 center">
-<img src="images/copilot-icon-light.png" alt="Copilot Symbol" height="120" />
+<img src="../images/copilot-icon-light.png" alt="Copilot Symbol" height="120" />
 </div>
 </div>
 

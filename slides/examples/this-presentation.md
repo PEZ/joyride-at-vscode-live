@@ -28,8 +28,8 @@
   * The AI can build them again, when you need them
 
 <div style="display: flex; justify-content: flex-start; gap: 20px; margin-top: 50px;">
-<img src="images/joyride-icon.png" alt="Joyride Symbol" style="max-height: 180px;" />
-<img src="images/copilot-icon-light.png" alt="Copilot Symbol" style="max-height: 180px;" />
+<img src="../images/joyride-icon.png" alt="Joyride Symbol" style="max-height: 180px;" />
+<img src="../images/copilot-icon-light.png" alt="Copilot Symbol" style="max-height: 180px;" />
 </div>
 
 </div>

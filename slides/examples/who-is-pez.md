@@ -6,7 +6,7 @@
 <div class="row">
 <div class="col-2 center">
 
-<img src="images/pappapez.png" alt="PEZ photo" />
+<img src="../images/pappapez.png" alt="PEZ photo" />
 
 </div>
 <div class="col-5">
@@ -23,7 +23,7 @@
 
 Employer and open source patreon:
 
-<img src="images/agical.svg" alt="Agical logo" />
+<img src="../images/agical.svg" alt="Agical logo" />
 
 </div>
 </div>

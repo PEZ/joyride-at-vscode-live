@@ -1,2 +1,10 @@
 {:slides ["slides/welcome.md"
-          "slides/what-is-joyride.md"]}
+          "slides/what-is-joyride.md"
+          "slides/examples/hello.md"
+          "slides/examples/what-is-joyride.md"
+          "slides/examples/joyride-intro.md"
+          "slides/examples/copilot-joyride-magic.md"
+          "slides/examples/live-hacking-your-editor.md"
+          "slides/examples/this-presentation.md"
+          "slides/examples/who-is-pez.md"
+          "slides/examples/experiences.md"]}
