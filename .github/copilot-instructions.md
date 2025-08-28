@@ -1,6 +1,6 @@
-# Joyride Live Demo Supporting project
+# Joyride Live Demo Supporting Project
 
-This is a **Joyride workspace automation project** demonstrating VS Code customization and presentation tooling using ClojureScript. The project showcases interactive programming with Joyride, where VS Code becomes scriptable in user space using the full VS Code Extension API. The project supports a streamed live demo of Joyride on the VS Code Youtube channel. Address the audience as "Chat".
+This is a **Joyride workspace automation project** demonstrating VS Code customization and presentation tooling using ClojureScript. The project showcases interactive programming with Joyride, where VS Code becomes scriptable in user space using the full VS Code Extension API. The project supports a streamed live demo of Joyride on the VS Code YouTube channel. Address the audience as "Chat".
 
 ## Essential Joyride Information Sources
 
@@ -15,9 +15,10 @@ These tools contain all the detailed information about Joyride APIs, project str
 
 ### Core Components
 - **Joyride Scripts**: Workspace-specific automation in `.joyride/` (version-controlled automation)
-- **Presentation System**: Custom slideshow with navigation, notes, and audio playback (demo of Joyride capabilities, not the primary presentation format). Agents should understand audio generation for slides, ad-hoc speech, and coordinating `next-slide` with `audio-playback` namespaces
-- **Interactive Examples**: Live coding demonstrations and REPL-driven development patterns
-- **Audio Tooling**: TTS generation and webview-based audio playback system
+- **Presentation System**: Custom slideshow with navigation, speaker notes, and audio playback demonstrating Joyride capabilities
+- **Interactive Examples**: Live coding demonstrations and REPL-driven development patterns in `live_examples.cljs`
+- **Audio Tooling**: TTS generation and webview-based audio playback system for presentations
+- **Timer Widget**: Status bar timer for presentation time management
 
 ### Key Technologies
 - **Joyride**: VS Code extension providing ClojureScript runtime (SCI) in Extension Host
@@ -32,18 +33,21 @@ These tools contain all the detailed information about Joyride APIs, project str
 ├── scripts/
 │   └── workspace_activate.cljs    # Project startup automation
 ├── src/
-│   ├── live_examples.cljs         # Interactive coding examples
-│   ├── next_slide.cljs           # Presentation navigation
+│   ├── live_examples.cljs         # Interactive coding examples (1381 lines)
+│   ├── next_slide.cljs           # Presentation navigation system
 │   ├── next_slide_notes.cljs     # Speaker notes management
 │   ├── showtime.cljs             # Timer status bar widget
 │   └── ai_presenter/             # Audio generation & playback
+│       ├── audio_generation.cljs # TTS generation using OpenAI API
+│       ├── audio_playback.cljs   # Webview-based audio control
+│       └── opening_sequence.cljs  # Automated presentation opener
 └── resources/
     └── audio-service.html        # Webview for browser audio
 
 slides/                           # Markdown presentation content
-slides/voice/                     # Audio files for slides
-slides.edn                       # Slide deck configuration
+slides.edn                       # Slide deck configuration (authoritative ordering)
 next-slide.css                   # Presentation styling
+package.json                     # NPM dependencies (ai-text-to-speech, posthtml-parser)
 ```
 
 ## Development Patterns
@@ -57,19 +61,52 @@ This project demonstrates **REPL-driven development**:
 
 ### Workspace Activation Pattern
 
-When working with the workspace_activate.cljs script. Carefully study its patterns to understand why things are done the way they are.
+The `workspace_activate.cljs` script demonstrates essential Joyride patterns:
+- **Disposable Management**: Tracks and cleans up event handlers for script re-runnability
+- **Extension Context Integration**: Registers disposables with VS Code's lifecycle
+- **Automated Initialization**: Sets up presentation system, audio service, and status bar on workspace load
+- **Cross-namespace Coordination**: Orchestrates `next-slide`, `showtime`, and `ai-presenter` modules
+
+Critical pattern for reloadable scripts:
+```clojure
+(defonce !db (atom {:disposables []}))
+
+(defn- clear-disposables! []
+  (run! #(.dispose %) (:disposables @!db))
+  (swap! !db assoc :disposables []))
+
+(defn- push-disposable [disposable]
+  (swap! !db update :disposables conj disposable)
+  (-> (joyride/extension-context) .-subscriptions (.push disposable)))
+```
 
 ### Disposable Management
-Critical pattern for Joyride scripts, especially when experimenting in the REPL:
+Critical pattern for Joyride scripts and REPL experimentation - always track disposables to prevent resource leaks:
+
 ```clojure
-;; Always register event handlers with extension context to prevent leaks
-(push-disposable
+;; Basic pattern: Use def to hold disposables for manual cleanup
+(def my-disposable
   (vscode/workspace.onDidOpenTextDocument handler))
+
+;; Clean up when done
+(.dispose my-disposable)
+
+;; For multiple disposables, collect in a vector
+(def my-disposables
+  [(vscode/workspace.onDidOpenTextDocument handler1)
+   (vscode/commands.registerCommand "my.command" handler2)])
+
+;; Clean up all
+(run! #(.dispose %) my-disposables)
+
+;; Always register with extension context to prevent leaks on deactivation
+(-> (joyride/extension-context) .-subscriptions (.push my-disposable))
 ```
-The `workspace_activate.cljs` demonstrates a robust pattern for disposable cleanup and management that can be handy for re-runnable scripts.
+
+For systematic/framework approaches, see the `workspace_activate.cljs` pattern which demonstrates reloadable script architecture with automatic disposable tracking.
 
 ### Keyboard Shortcuts Integration
-Scripts include keyboard binding definitions as comments:
+Scripts include keyboard binding definitions as comments for easy copy-paste:
 ```clojure
 ;; {
 ;;   "key": "ctrl+alt+j s",
@@ -91,7 +128,9 @@ Scripts include keyboard binding definitions as comments:
 - `slides.edn`: EDN configuration defining slide order (vector ordering is authoritative)
 - Markdown files in `slides/` directory
 - Relative path resolution from workspace root
-- AI prompts and instructions for presentation system reference this configuration## Interactive Examples (`live_examples.cljs`)
+- AI prompts and instructions for presentation system reference this configuration
+
+## Interactive Examples (`live_examples.cljs`)
 
 Demonstrates core Joyride patterns:
 - VS Code API usage (messages, commands, configuration)
@@ -186,7 +225,9 @@ Key patterns from `live_examples.cljs` demonstrate:
 - Event handling with proper cleanup
 - Status bar item creation and animation
 - Extension API integration (e.g., Calva)
-- NPM module usage and ClojureScript interop### Human-AI Collaboration Protocol
+- NPM module usage and ClojureScript interop
+
+### Human-AI Collaboration Protocol
 When uncertain or exploring new territory:
 
 1. **Use REPL to explore**: Start with small expressions to understand the system
