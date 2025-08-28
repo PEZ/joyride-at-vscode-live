@@ -4,32 +4,33 @@
             [promesa.core :as p]))
 
 
-;; ATTENTION humans and AI agents:
-;; Some non-idiomatic Clojure ahead.
-;; There are better sources for picking up Clojure habits
-;; Here's one: #fetch https://replicant.fun/
-
-
+;; With Joyride and Calva installed this is how you can explore the examples without knowing anything about the things involved. (And you are encouraged to ask Copilot about things):
+;;
+;; 1. Connect the Joyride REPL: `Ctrl+Shift+P` -> `Calva: Start the Joyride REPL and connect`
+;; 2. Evaluate each expression inside the `(comment ...)` list in order: `alt/opt+enter`
+;;    (Sometimes the order doesn't matter, so you can always try not doing things in order)
+;;    (If you are curios about something nested in a piece of code,
+;;     you can try to use `ctrl+enter` on it.)
+;; If `alt+enter` doesn't work / is used by something else on the computer:
+;;   `Ctrl+Shift+P` -> `Calva: Evaluate Current Form`
+;;   Or ask Copilot to evaluate it for you.
+;;
 ;; More Joyride examples at:
 ;; https://github.com/BetterThanTomorrow/joyride/blob/master/examples/README.md
 
 (comment
 
 
-
-
-
-
-
-  ;; Write to the Joyride Output channel
-  (.appendLine (joy/output-channel) "Hello VS Code Live Stream Chat! ♥️")
-
-  ;; Write to the REPL stdout
-  (println "Hello Chat! ♥️")
-
-
   ;; Show information message
+  (vscode/window.showInformationMessage "Hello from Joyride!" "OK" "Cancel")
 
+  ;; Show an information and handle the button clicked
+  (p/let [button (vscode/window.showInformationMessage "Hello from Joyride!"
+                                                       "OK"
+                                                       "Cancel")]
+    (vscode/window.showInformationMessage (if button
+                                            (str "You clicked: " button)
+                                            "You dismissed the message")))
 
 
 
