@@ -247,7 +247,20 @@ Example collaboration flow:
 ;; ^ This shows I need awaitResult: true to get the button choice
 ```
 
+### ⚠️ Critical: awaitResult Usage
 
+**Use `awaitResult: true` only when you are evaluating an async expression and when you need the return value!**
+
+```clojure
+;; Need return value → awaitResult: true
+(slides/get-current-slide-name+)               ; Get slide name
+(audio/generate-and-play-message!+ "Hello")     ; Wait for completion
+(vscode/window.showInformationMessage "Test" "OK" "Cancel")   ; Get user choice
+
+;; Side effects only → omit awaitResult (defaults to false)
+(slides/activate!)                             ; Start system
+(vscode/window.showInformationMessage "Hello")   ; Nothing to wait for
+```
 
 ## Essential Validation Practices
 
