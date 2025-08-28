@@ -43,6 +43,12 @@ When the project opens with Joyride installed, three things happen, triggered fr
 2. The **Audio Service** webview opens. This is for the audio playback script (see below). Browser security requires that you click the **Enable Audio** button in order for any sound to play.
 3. This README opens in preview mode.
 
+### Put Copilot in live-demo mode
+
+There's a chatmode in this project that is designed to make Copilot effective in demonstrating the project and Joyride for you: [live-demo Chatmode](.github/chatmodes/live-demo.chatmode.md). Select this mode and then ask Copilot to demo things for you.
+
+If you've run `npm install` and have a configure OpenAI API key, you can also try the [speaking agent Chatmode](.github/chatmodes/speaking-agent.chatmode.md).
+
 ### Create the timezones listing script
 
 **Timezones Listing** is a Joyride script that will let you convert a time (say for an event). Then create a list of that time in some major timezones around the globe, offering you to copy a specific time, or all of them to the clipboard.
