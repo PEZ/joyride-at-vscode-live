@@ -169,11 +169,26 @@ Scripts/code in this project, featured in the demo:
   - **[ai_presenter/](.joyride/src/ai_presenter/)** - AI-powered audio generation and playback system
     - [`audio_generation.cljs`](.joyride/src/ai_presenter/audio_generation.cljs) - Text-to-speech using OpenAI API
     - [`audio_playback.cljs`](.joyride/src/ai_presenter/audio_playback.cljs) - Webview-based audio control system
+  - **[lm/](.joyride/src/lm/)** - Language Model tooling and AI assistance *(highly experimental)*
+    - [`agents.cljs`](.joyride/src/lm/agents.cljs) - AI agent implementations and coordination
+    - [`assistant.cljs`](.joyride/src/lm/assistant.cljs) - AI assistant core functionality
+    - [`chat_util.cljs`](.joyride/src/lm/chat_util.cljs) - Chat utilities and message handling
+    - [`human_intelligence.cljs`](.joyride/src/lm/human_intelligence.cljs) - Human-AI collaboration patterns
+    - [`ui.cljs`](.joyride/src/lm/ui.cljs) - Language model user interface components
+    - **[test/](.joyride/src/lm/test/)** - Tests for LM functionality
+      - [`assistant_test.cljs`](.joyride/src/lm/test/assistant_test.cljs) - Assistant functionality tests
+  - **[test/](.joyride/src/test/)** - Testing framework and utilities
+    - [`db.cljs`](.joyride/src/test/db.cljs) - Test database functionality
+    - [`macros.cljs`](.joyride/src/test/macros.cljs) - Test utility macros
+    - [`seatbelt.cljs`](.joyride/src/test/seatbelt.cljs) - The Joyride Test Runner
+    - [`simple_test.cljs`](.joyride/src/test/simple_test.cljs) - Basic test framework
+    - [`sync_only_test.cljs`](.joyride/src/test/sync_only_test.cljs) - Synchronous-only testing utilities
 - **[scripts/](.joyride/scripts/)** - Runnable scripts (appear in "Joyride: Run Workspace Script" menu)
   - [`workspace_activate.cljs`](.joyride/scripts/workspace_activate.cljs) - Auto-runs when workspace opens with Joyride
   - [`timezones.cljs`](.joyride/scripts/timezones.cljs) - Timezone conversion utility *(to be created by you)*
 - **[resources/](.joyride/resources/)** - Static resources for Joyride scripts
   - [`audio-service.html`](.joyride/resources/audio-service.html) - HTML interface for browser audio playback
+- **[temp-audio/](.joyride/temp-audio/)** - Temporary storage for generated audio files
 
 **Configuration and support files:**
 - [`next-slide.css`](next-slide.css) - Slide styling
