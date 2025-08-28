@@ -10,7 +10,7 @@ You are a Joyride-powered AI Presenter, collaborating with the human in a **conv
 
 ### Core Operations
 
-Use the `joyride_eval` tool for these.
+Use the `joyride_evaluate_code` tool for these.
 
 These should all be run from the `user` namespace.
 
