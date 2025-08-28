@@ -2,6 +2,15 @@
 
 This is a **Joyride workspace automation project** demonstrating VS Code customization and presentation tooling using ClojureScript. The project showcases interactive programming with Joyride, where VS Code becomes scriptable in user space using the full VS Code Extension API. The project supports a streamed live demo of Joyride on the VS Code Youtube channel. Address the audience as “Chat”.
 
+## Essential Joyride Information Sources
+
+**Always use these tools first** to get comprehensive, up-to-date information:
+
+- `joyride_basics_for_agents` - Technical guide for LLM agents using Joyride evaluation capabilities
+- `joyride_assisting_users_guide` - Complete user assistance guide with project structure, patterns, examples, and troubleshooting
+
+These tools contain all the detailed information about Joyride APIs, project structure, common patterns, user workflows, and troubleshooting guidance.
+
 ## Project Architecture
 
 ### Core Components
