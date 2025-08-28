@@ -160,29 +160,27 @@ Experimental, but mostly working fine. It uses a webview for playback, and this 
 
 Scripts/code in this project, featured in the demo:
 
-```
-.joyride/
-├── src/
-│   ├── live_examples.cljs              # Examples namespace
-│   ├── next_slide.cljs                 # Slide show script
-│   ├── next_slide_notes.cljs           # Slide notes script
-│   ├── showtime.cljs                   # Timer status bar item
-│   └── ai_presenter/
-│       ├── audio_generation.cljs       # Audio generation (TTS)
-│       └── audio_playback.cljs         # Audio playback
-├── scripts/
-│   ├── workspace_activate.cljs         # Workspace activation script
-│   └── timezones.cljs                  # Timezones script *(to be created by you)*
-└── resources/
-    └── audio-service.html              # Audio service webview
+**[.joyride/](.joyride/)** - Workspace-specific Joyride automation (version-controlled)
+- **[src/](.joyride/src/)** - Library functions and reusable code called by shortcuts/scripts
+  - [`live_examples.cljs`](.joyride/src/live_examples.cljs) - Interactive programming examples and patterns
+  - [`next_slide.cljs`](.joyride/src/next_slide.cljs) - Presentation navigation system with Zen mode
+  - [`next_slide_notes.cljs`](.joyride/src/next_slide_notes.cljs) - Speaker notes management and PDF generation
+  - [`showtime.cljs`](.joyride/src/showtime.cljs) - Status bar timer widget for presentations
+  - **[ai_presenter/](.joyride/src/ai_presenter/)** - AI-powered audio generation and playback system
+    - [`audio_generation.cljs`](.joyride/src/ai_presenter/audio_generation.cljs) - Text-to-speech using OpenAI API
+    - [`audio_playback.cljs`](.joyride/src/ai_presenter/audio_playback.cljs) - Webview-based audio control system
+- **[scripts/](.joyride/scripts/)** - Runnable scripts (appear in "Joyride: Run Workspace Script" menu)
+  - [`workspace_activate.cljs`](.joyride/scripts/workspace_activate.cljs) - Auto-runs when workspace opens with Joyride
+  - [`timezones.cljs`](.joyride/scripts/timezones.cljs) - Timezone conversion utility *(to be created by you)*
+- **[resources/](.joyride/resources/)** - Static resources for Joyride scripts
+  - [`audio-service.html`](.joyride/resources/audio-service.html) - HTML interface for browser audio playback
 
-Configuration and support files:
-├── next-slide.css                      # Slide styling
-├── slides.edn                          # Slide deck index
-└── dev/
-    ├── timezones-press-release.md      # Timezones press release
-    └── timezones-implementation-notes.md # Timezones implementation notes
-```
+**Configuration and support files:**
+- [`next-slide.css`](next-slide.css) - Slide styling
+- [`slides.edn`](slides.edn) - Slide deck index
+- **[dev/](dev/)**
+  - [`timezones-press-release.md`](dev/timezones-press-release.md) - Timezones press release
+  - [`timezones-implementation-notes.md`](dev/timezones-implementation-notes.md) - Timezones implementation notes
 
 Scripts not in this project, featured in the demo:
 
