@@ -168,6 +168,12 @@ Demonstrates core Joyride patterns:
 3. Use `workspace_activate.cljs` as entry point for exploration
 4. **Dual REPL Environment**: When both human and AI are connected, they share the same REPL environment for collaborative development
 
+Remember that the human does not see what you evaluate with the tool:
+* If you evaluate a large amount of code: describe in a succinct way what is being evaluated.
+* If you evaluate a smaller code piece (most cases if you do interactive programming right): prepend the tool use with a code block containg the code being evaluated.
+
+The user does not see the result of the evaluation either. You can mention the result in a non-verbose way so that the user stays informed without being overwhelmed.
+
 ### Audio Features (Optional)
 - Requires OpenAI API key in environment for TTS
 - Audio service requires user interaction (Enable Audio button)
