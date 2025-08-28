@@ -1,5 +1,7 @@
 # VS Code Live Joyride demo
 
+[github.com/PEZ/joyride-at-vscode-live](https://github.com/PEZ/joyride-at-vscode-live)
+
 [Joyride](https://marketplace.visualstudio.com/items?itemName=betterthantomorrow.joyride) is a [VS Code](https://code.visualstudio.com/) extension that lets you customize and automate your VS Code experience. In user space (Emacs style). Joyride's Language Model tools enable Copilot to hack VS Code with you, or even for you. Joyride is open source and free to use.
 
 <div style="position: relative; display: inline-block;">
