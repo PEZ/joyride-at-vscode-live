@@ -47,26 +47,39 @@ All functions should be executed from the `user` namespace using `joyride_evalua
 (require '[ai-presenter.audio-generation :as audio]
          '[ai-presenter.audio-playback :as playback])
 
+;; Environment validation for TTS (check first!)
+(audio/validate-environment)                   ; check OpenAI API key
+;; => {:api-key-present? true, :api-key-length 51}
+
+;; Initialize audio service (if not already active)
+(playback/init-audio-service!)
+
 ;; Quick audio generation and playback (OpenAI TTS)
 (audio/generate-and-play-message!+ "Hello! Welcome to this Joyride demonstration.")
 
-;; Load and play existing audio files
-(playbook/load-and-play-audio!+ "slides/voice/welcome.mp3")
+;; Generate audio file for specific slide (saves to slides/voice/)
+(audio/generate-slide-audio!+
+  "welcome"
+  "Welcome everyone! Today we're exploring Joyride.")
 
-;; Audio control
+;; Load and play existing audio files
+(playback/load-and-play-audio!+ "slides/voice/welcome.mp3")
+
+;; Advanced audio control
 (playback/play-audio!+)                        ; play/resume
 (playback/pause-audio!+)                       ; pause
-(playback/stop-audio!+)                        ; stop
+(playback/stop-audio!+)                        ; stop and reset
 (playback/set-volume!+ 0.7)                   ; set volume (0.0-1.0)
 (playback/get-audio-status!+)                  ; check status
+(playback/play-and-wait-audio!+)               ; play and wait for completion
 
-;; Environment validation
-(audio/validate-environment)                   ; check OpenAI API key
+;; Check if user has enabled audio (required for browser security)
+(playback/check-user-gesture!+)
 ```
 
 ### Live Coding Demonstrations
 ```clojure
-;; Status bar animations and interactions
+;; Basic status bar items
 (def demo-item (vscode/window.createStatusBarItem vscode/StatusBarAlignment.Right))
 (set! (.-text demo-item) "🎸 Live Demo")
 (.show demo-item)
@@ -76,13 +89,133 @@ All functions should be executed from the `user` namespace using `joyride_evalua
       #js {:command "joyride.runCode"
            :arguments ["(vscode/window.showInformationMessage \"Live coding rocks!\")"]})
 
-;; Configuration changes
+;; Animated status bar with color cycling
+(def !demo-state (atom {:alpha 0 :direction 1}))
+
+(defn animate-demo-item! []
+  (let [{:keys [alpha direction]} @!demo-state
+        new-alpha (+ alpha (* direction 10))
+        new-direction (cond
+                        (>= new-alpha 255) -1
+                        (<= new-alpha 0) 1
+                        :else direction)
+        final-alpha (max 0 (min 255 new-alpha))
+        color (str "#FFD700" (-> final-alpha int (.toString 16) (.padStart 2 "0")))]
+    (set! (.-text demo-item) "🎸 Live Demo")
+    (set! (.-color demo-item) color)
+    (swap! !demo-state assoc :alpha final-alpha :direction new-direction)))
+
+;; Start/stop animation
+(def demo-timer (js/setInterval animate-demo-item! 50))  ; start
+(js/clearInterval demo-timer)                           ; stop
+(.dispose demo-item)                                    ; cleanup
+
+;; Configuration changes (immediate effect)
 (.update (vscode/workspace.getConfiguration "editor")
          "fontSize" 18 vscode/ConfigurationTarget.Global)
+
+;; Event handling with proper cleanup
+(def disposable
+  (vscode/workspace.onDidOpenTextDocument
+    (fn [doc] (println "Opened:" (.-fileName doc)))))
+;; Remember: (.dispose disposable)
 
 ;; File system operations
 (p/let [files (vscode/workspace.findFiles "**/*.cljs")]
   (vscode/window.showInformationMessage (str "Found " (count files) " Clojure files")))
+
+;; Interactive Quick Pick menu
+(p/let [choice (vscode/window.showQuickPick
+                 #js ["Save All" "Close All" "Toggle Sidebar"]
+                 #js {:placeHolder "Choose action"})]
+  (case choice
+    "Save All" (vscode/commands.executeCommand "workbench.action.files.saveAll")
+    "Close All" (vscode/commands.executeCommand "workbench.action.closeAllEditors")
+    "Toggle Sidebar" (vscode/commands.executeCommand "workbench.action.toggleSidebarVisibility")
+    nil))
+
+;; Extension API integration (Calva example)
+(when-let [ext (vscode/extensions.getExtension "betterthantomorrow.calva")]
+  (when (.-isActive ext)
+    (let [calva (some-> ext .-exports .-v1)]
+      (p/let [[range _] (calva.ranges.currentTopLevelForm)]
+        (println "Current top-level form range:" range)))))
+```
+
+## Advanced Demo Patterns
+
+### Disposable Management (Essential for Re-runnable Scripts)
+```clojure
+;; Pattern for clean script re-execution
+(defonce !db (atom {:disposables []}))
+
+(defn clear-disposables! []
+  (run! #(.dispose %) (:disposables @!db))
+  (swap! !db assoc :disposables []))
+
+(defn push-disposable [disposable]
+  (swap! !db update :disposables conj disposable)
+  (.push (.-subscriptions (joyride/extension-context)) disposable))
+
+;; Use like: (push-disposable (vscode/workspace.onDidOpenTextDocument handler))
+```
+
+### HTML/NPM Integration Examples
+```clojure
+;; HTML to Hiccup conversion using NPM module
+(require '["posthtml-parser" :as parser]
+         '[clojure.walk :as walk])
+
+(defn html->hiccup [html]
+  (-> html
+      (parser/parser)
+      (js->clj :keywordize-keys true)
+      (->> (into [:div])
+           (walk/postwalk
+            (fn [{:keys [tag attrs content] :as element}]
+              (if tag
+                (into [(keyword tag) (or attrs {})] content)
+                element))))))
+```
+
+### Workspace Automation Patterns
+```clojure
+;; Auto-open workspace README as preview
+(p/let [workspace-folder (first vscode/workspace.workspaceFolders)
+        readme-path (vscode/Uri.joinPath (.-uri workspace-folder) "/README.md")]
+  (vscode/commands.executeCommand "markdown.showPreview" readme-path))
+
+;; Create files and directories
+(p/let [workspace-root (-> vscode/workspace.workspaceFolders first .-uri)
+        new-dir (vscode/Uri.joinPath workspace-root "demo-folder")
+        _ (vscode/workspace.fs.createDirectory new-dir)
+        demo-file (vscode/Uri.joinPath new-dir "demo.txt")
+        content (js/TextEncoder. (.encode "Hello from Joyride!"))]
+  (vscode/workspace.fs.writeFile demo-file content))
+
+;; Evaluate clipboard content as Joyride code
+(defn evaluate-clipboard+ []
+  (p/let [clipboard-text (vscode/env.clipboard.readText)]
+    (when (not-empty clipboard-text)
+      (vscode/commands.executeCommand "joyride.runCode" clipboard-text))))
+```
+
+### REPL Validation Patterns (Always Use Before Demos!)
+```clojure
+;; Test VS Code API availability
+(require '["vscode" :as vscode])
+(some-> vscode/window.activeTextEditor .-document .-fileName)
+
+;; Explore available methods
+(js->clj (js/Object.keys vscode/window))
+
+;; Test extension API before using
+(when-let [ext (vscode/extensions.getExtension "betterthantomorrow.calva")]
+  {:active (.-isActive ext)
+   :api-available (some? (.-exports ext))})
+
+;; Validate configuration access
+(-> (vscode/workspace.getConfiguration "editor") (.get "fontSize"))
 ```
 
 ## Demo Scenarios
@@ -122,13 +255,90 @@ All functions should be executed from the `user` namespace using `joyride_evalua
 ### 4. Combined Presentation Scenario
 **Goal**: Full demonstration combining slides, audio, live coding, and user interaction
 
+**Complete Workflow Example**:
+```clojure
+(in-ns 'user)
+;; Complete presentation workflow
+(require '[next-slide :as slides]
+         '[ai-presenter.audio-generation :as audio]
+         '[ai-presenter.audio-playback :as playback])
+
+;; 1. Set up presentation environment
+(slides/activate!)
+(slides/restart!)  ; go to first slide
+(showtime/start!)  ; start timer
+
+;; 2. Generate and play coordinated audio
+(p/let [slide-name (slides/get-current-slide-name+)
+        slide-base (first (.split slide-name "."))]
+  ;; Generate narration for current slide
+  (audio/generate-slide-audio!+
+    slide-base
+    "Welcome to our interactive coding demonstration!")
+  ;; Load and play the generated audio
+  (playback/load-and-play-audio!+ (str "slides/voice/" slide-base ".mp3")))
+
+;; 3. Live coding demo between slides
+(def live-demo-item (vscode/window.createStatusBarItem vscode/StatusBarAlignment.Right))
+(set! (.-text live-demo-item) "🎸 Live Coding")
+(.show live-demo-item)
+
+;; 4. Navigate with coordination
+(p/let [_ (slides/next! true)  ; advance slide
+        slide-name (slides/get-current-slide-name+)]
+  (println "Now showing:" slide-name))
+```
+
 **Steps**:
 1. Set up presentation environment (timer, slide system)
-2. Present slides with coordinated audio
+2. Present slides with coordinated audio narration
 3. Demonstrate live coding between slides
 4. Generate custom audio responses to user questions
 5. **Continuous involvement**: Check each component works and gather user feedback
 6. **Adapt demonstration**: Based on user interests and what's working
+
+### 5. Advanced Animation Demo
+**Goal**: Show sophisticated VS Code UI manipulation with live animations
+
+**Complete Animation Example**:
+```clojure
+(in-ns 'user)
+;; Advanced status bar animation with wave effects
+(def !animation-state (atom {:alpha 0 :direction 1}))
+
+(defn wave-alpha [alpha]
+  (let [unit-alpha (/ alpha 255)
+        cos-alpha (js/Math.cos (* js/Math.PI unit-alpha))
+        shifted (/ (+ 1 cos-alpha) 2)]
+    (* 255 shifted)))
+
+(defn color-with-alpha [color alpha]
+  (str color (-> alpha int js/Number. (.toString 16) (.padStart 2 "0"))))
+
+(def gold "#FFD700")
+(def wave-item (vscode/window.createStatusBarItem vscode/StatusBarAlignment.Right))
+
+(defn animate-wave! []
+  (let [alpha (wave-alpha (:alpha @!animation-state))]
+    (swap! !animation-state update :alpha + 15)
+    (set! (.-text wave-item) "🌊 Joyride Wave")
+    (set! (.-color wave-item) (color-with-alpha gold alpha))))
+
+;; Start wave animation
+(def wave-timer (js/setInterval animate-wave! 16))
+(.show wave-item)
+
+;; Stop and cleanup
+(js/clearInterval wave-timer)
+(.dispose wave-item)
+```
+
+**Steps**:
+1. Create animated status bar with wave color effects
+2. **Check with user**: "Can you see the animated wave effect in your status bar?"
+3. Show the mathematics behind the animation
+4. **Involve user**: "What color or animation pattern would you like to try?"
+5. Live-modify the animation code based on user suggestions
 
 ## User Involvement Protocol
 
@@ -179,6 +389,7 @@ When presenting for VS Code Live Stream audience ("Chat"):
 
 ### Common Issues
 - Audio requires user gesture: Guide through "Enable Audio" process
+- The agent forgets to verify with the user with things that only the user can see or hear.
 - Missing API keys: Explain setup requirements
 - Slide files not found: Check workspace structure
 - Extension not loaded: Verify Joyride and dependencies
